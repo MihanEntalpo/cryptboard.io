@@ -1,0 +1,124 @@
+.arcticmodal-overlay,
+.arcticmodal-container { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 1000; }
+.arcticmodal-container { overflow: auto; margin: 0; padding: 0; border: 0; border-collapse: collapse; }
+*:first-child+html .arcticmodal-container { height: 100% }
+.arcticmodal-container_i { height: 100%; margin: 0 auto; }
+.arcticmodal-container_i2 { padding: 24px; margin: 0; border: 0; vertical-align: middle; }
+.arcticmodal-error { padding: 20px; border-radius: 10px; background: #000; color: #fff; }
+.arcticmodal-loading { width: 80px; height: 80px; border-radius: 10px; background: #000 url(loading.gif) no-repeat 50% 50%; }
+
+.box-modal {
+	position: relative;
+	padding: 16px;
+	background: #fff;
+	color: #3c3c3c;
+	font: 14px/18px Arial, "Helvetica CY", "Nimbus Sans L", sans-serif;
+	box-shadow: 0 0 0 6px rgba(153, 153, 153, .3);
+	border-radius: 6px;
+
+}
+.box-modal_close { position: absolute; right: 10px; top: 6px; font-size: 11px; line-height: 15px; color: #999; cursor: pointer; }
+.box-modal_close:hover { color: #666; }
+.box-modal .box-bottom
+{
+	/*min-height:30px;*/
+
+	margin-left:-16px;
+	margin-right:-16px;
+	margin-bottom:-16px;
+	margin-top:16px;
+
+	padding:8px;
+
+	border-top: 1px solid #eee;
+
+	background: #f5f5f5;
+
+	-webkit-border-bottom-right-radius: 6px;
+	-moz-border-radius-bottomright: 6px;
+	border-bottom-right-radius: 6px;
+	-webkit-border-bottom-left-radius: 6px;
+	-moz-border-radius-bottomleft: 6px;
+	border-bottom-left-radius: 6px;
+}
+.box-modal .box-title
+{
+	font-weight:bold;
+
+	margin-left:-16px;
+	margin-right:-16px;
+	margin-top:-16px;
+	margin-bottom:16px;
+
+	padding:8px;
+
+	border-top: 1px solid #eee;
+
+	background: #f5f5f5;
+
+	-webkit-border-top-right-radius: 6px;
+	-moz-border-radius-topright: 6px;
+	border-top-right-radius: 6px;
+	-webkit-border-top-left-radius: 6px;
+	-moz-border-radius-topleft: 6px;
+	border-top-left-radius: 6px;
+}
+.box-modal .box-content
+{
+	padding:0px;
+	line-height: 150%;
+}
+
+/*
+.box-modal .box-content>div:not(.unmodal_style) input[type=text],
+.box-modal .box-content>div:not(.unmodal_style) input[type=password],
+.box-modal .box-content>div:not(.unmodal_style) select
+{
+	height:1em;
+	line-height:20px;
+}
+*/
+
+
+.box-modal .box-bottom button
+{
+	float:right;
+	margin-left:10px;
+}
+
+.box-content .mf-row
+{
+	/*border:1px solid red;*/
+	width:95%;
+	margin-top:7px;
+}
+
+.box-content .mf-row .mf-single
+{
+	/*border:1px solid red;*/
+	text-align:center;
+}
+
+
+.box-content .mf-row .mf-title
+{
+	/*border:1px dotted blue;*/
+	display:inline-block;
+	width:50%;
+	margin-top:-3px;
+}
+
+.box-content .mf-row .mf-input
+{
+	/*border:1px inset green;*/
+	display:inline-block;
+	width:50%;
+}
+
+.box-content .mf-row .mf-input input[type=text],
+.box-content .mf-row .mf-input input[type=password],
+.box-content .mf-row .mf-input select
+{
+	width:100%;
+	margin-bottom:5px;
+}

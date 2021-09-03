@@ -1,0 +1,4 @@
+.env
+jwtRS256.key
+jwtRS256.key.pub
+vendor

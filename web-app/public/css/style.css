@@ -1,0 +1,564 @@
+main
+{
+    margin-top: 64px;
+}
+
+#init-popover
+{
+    z-index: 9000;
+    background-color: black;
+    color:white;
+    position: fixed;
+    left:0px;
+    top:0px;
+    width:100%;
+    height:100%;
+    text-align: center;
+    padding-top: 2em;
+}
+
+#init-popover .inner-container
+{
+    display: inline-block;
+    text-align: left;
+}
+
+#init-popover .init-items
+{
+    font-size:1.2em;
+}
+
+#init-popover ul.init-items 
+{
+    list-style: none;
+}
+
+#qrcode
+{
+    padding: 10px;
+    border:1px solid grey;
+    display:inline-block;
+    max-width: 100vw;
+}
+
+main .tab
+{
+    display:none;
+}
+
+main .tab.active
+{
+    display:block;
+}
+
+.message
+{
+    border:1px solid grey;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    padding-left:3px;
+    position: relative;
+    min-height: 38px;
+}
+
+.message .meta
+{
+    padding-right:5px;
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+}
+
+.message.contentless
+{
+    height: 24px;
+}
+
+.message .meta .type,
+.message .meta .state,
+.message .meta .processing
+{
+    display:inline-block;
+}
+
+.message .text-container
+{
+    padding:2px;
+    margin:2px;   
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+.receiver
+{
+    background-color: #f9f9f9;
+    padding: 3px;
+    display: flex;
+    margin-bottom: 6px;
+    max-width: 100%;
+    -webkit-box-shadow: 1px 1px 2px 0px rgba(50, 50, 50, 0.3);
+    -moz-box-shadow:    1px 1px 2px 0px rgba(50, 50, 50, 0.3);
+    box-shadow:         1px 1px 2px 0px rgba(50, 50, 50, 0.3);
+}
+
+.receiver .info
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0px;    
+}
+
+.receiver .info .uid
+{
+    color: grey;
+    font-size: 0.7em;
+}
+
+.receiver .info .name
+{
+    font-size: 0.8em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-x: hidden;
+}
+
+.receiver .info .uid:hover
+{
+    color: black;
+}
+
+.receiver .icon
+{
+/*    border: 1px solid red;*/
+    width: 64px;
+    height: 64px;
+    padding-left: 2px;
+}
+
+.receiver .name,
+.receiver .icon,
+.receiver .uid,
+.receiver .info,
+.receiver .buttons
+{
+/*    border:1px solid red;*/
+    /*padding:1px;*/
+}
+
+.receiver .buttons
+{
+    flex: 0;
+    display:relative;
+    flex-grow: 2;
+    min-width: 44px;
+}
+
+.avatar {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    display: inline-block;
+    cursor: zoom-in;
+}
+
+.avatar svg {
+    width: 64px;
+    height: 64px;
+}
+
+
+#add_key_button .loading
+{
+    display:none;
+}
+
+#add_key_button.loading .loading
+{
+    display:inline;
+}
+
+#add_key_button.loading .idle
+{
+    display:none;
+}
+
+.receiver .icon .avatar
+{
+    width: 48px;
+    height: 48px;
+}
+
+.receiver .icon .avatar svg
+{
+    width: 48px;
+    height: 48px;
+}
+
+.icon-example
+{
+    display: inline-block;
+    width: 200px;
+}
+
+.send .buttons
+{
+    float: right;
+    
+}
+
+.send .buttons .btn
+{
+    width:48px;
+    height: 32px;
+}
+
+.send .buttons .btn .loading
+{
+    display: none;
+}
+
+.send .buttons .btn.loading .loading
+{
+    display: block;
+}
+
+.send .buttons .btn.loading .idle
+{
+    display: none;
+}
+
+.send .text
+{
+    padding-right:49px;
+}
+
+.send .text textarea
+{
+    width: 100%;
+    min-height: 64px;
+}
+
+.key-share-link-group
+{
+    max-width:520px;
+}
+
+.receiver
+{
+    position: relative;
+}
+
+.receiver .send-toggle
+{
+    position: absolute;
+    right: -3px;
+    bottom: -1px;
+}
+
+.receiver .delete
+{
+    position: absolute;
+    right: 3px;
+    top: 3px;
+    cursor: pointer;
+}
+
+.receiver.without-key .icon svg
+{
+    width:48px;
+    height:48px;
+}
+
+.receiver.without-key .form-check-input:checked
+{
+    background-color: #ff3e0d; 
+    border-color: #fd6e0d;
+}
+
+.receiver.without-key .form-check-input:focus {
+    border-color: #feb786;
+    
+}
+
+.pencil-button
+{
+    cursor: pointer;
+}
+
+.message
+{
+    position: relative;
+}
+
+.message.outgoing
+{
+    margin-left:30px;
+}
+
+.message.incoming
+{
+    margin-right:36px;
+}
+
+.message.outgoing .avatar-circle
+{
+    position: absolute;
+    top: 0px;
+    left: -30px;
+}
+
+.message.incoming .avatar-circle
+{
+    position: absolute;
+    top: 0px;
+    right: -30px;
+}
+
+.avatar-circle
+{
+    width: 24px;
+    height: 24px;
+}
+
+.message.incoming:after,
+.message.incoming:before {
+    content: '';
+    display: block;
+    position: absolute;
+    left: 100%;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+.message.incoming:after {
+    top: 10px;
+    border-color: transparent transparent transparent #fefefe;
+    border-width: 5px;
+}
+
+.message.incoming:before {
+    top: 9px;
+    border-color: transparent transparent transparent #000;
+    border-width: 6px;
+}
+
+.message.outgoing:after,
+.message.outgoing:before {
+    content: '';
+    display: block;
+    position: absolute;
+    right: 100%;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+.message.outgoing:after {
+    top: 10px;
+    border-color: transparent #fefefe transparent transparent;
+    border-width: 5px;
+}
+
+.message.outgoing:before {
+    top: 9px;
+    border-color: transparent #000 transparent transparent;
+    border-width: 6px;
+}
+
+.message
+{
+    background-color: #fefefe;
+    -webkit-box-shadow: 1px 1px 1px 0px rgba(50, 50, 50, 0.25);
+    -moz-box-shadow:    1px 1px 1px 0px rgba(50, 50, 50, 0.25);
+    box-shadow:         1px 1px 1px 0px rgba(50, 50, 50, 0.25);
+}
+
+@media screen and (max-width: 750px) {
+    .receiver .info .uid
+    {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow-x: hidden;
+    }
+}
+
+@media screen and (max-width: 670px) {
+    
+    .receiver .info
+    {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 370px) {
+    
+    .receiver .buttons
+    {
+        display: none;
+    }
+    
+    .receiver
+    {
+        width: 52px;
+    }
+    
+    main.container-fluid
+    {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    
+    .block-wrapper.container-fluid
+    {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+    
+    .messages-wrapper
+    {   
+        padding-right: 3px;
+    }
+    
+    .receivers-wrapper
+    {
+        padding-left: 3px;
+    }
+}
+
+.public-key-content
+{
+    border: 1px inset grey;
+    background-color: lightgray;
+    padding:5px;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    max-width: 500px;
+}
+
+.big-avatar
+{
+    max-width: 500px;
+}
+
+.arcticmodal-container_i
+{
+    margin-top:56px;
+}
+
+.large-avatar
+{
+    min-width: 200px;
+    max-width: 500px;
+}
+
+.file-content
+{
+    display: flex;
+}
+
+.file-content .file-button
+{
+    display: flex;
+    position:relative;
+    width: 55px;
+    height: 64px;
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.file-content .file-button.loaded
+{
+    cursor: pointer;
+}
+
+.file-content .file-button .background
+{
+    position: absolute;
+    left: 8px;
+    top:8px;
+    z-index: 90;
+    opacity: 0.3;
+}
+
+.file-content .file-button .foreground
+{
+    position: absolute;
+    left: 18px;
+    top:20px;
+    z-index: 100;
+}
+
+.file-content .file-text
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.file-content .file-text .file-text-content
+{
+    display: flex;
+    flex-direction: column;
+}
+
+.file-content .file-text .file-text-content .file-name
+{
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+.file-content .file-text .file-text-content .file-size
+{
+    font-size: 0.7rem;
+    color: grey;
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+table.files-select-table .file-size
+{
+    font-size: 0.7rem;
+    color: grey;
+}
+
+table.files-select-table tr
+{
+    padding-bottom: 3px;
+}
+
+table.files-select-table td
+{
+    padding-right: 4px;
+}
+
+table.files-select-table td.file-name-and-size
+{
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+table.files-select-table textarea.file-comment
+{
+    width: 100%;
+    min-height: 2em;
+    height:2em;
+}
+
+table.files-select-table tr.file-row
+{
+    border-top: 1px solid grey;
+}
+
+.message .delete-button
+{
+    position: absolute;
+    right: 5px;
+    top: -1px;
+    cursor: pointer;
+}
+
+.full-width
+{
+    width:100%;
+}
