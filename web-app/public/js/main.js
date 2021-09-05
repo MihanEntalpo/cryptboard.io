@@ -1,4 +1,9 @@
 var helpers = {
+    /**
+     * Wrapper what make a promise-returning function out of any function
+     * @param {function} func Function to wrap
+     * @returns {function} wrapped function
+     */
     make_promise: function(func) {
         var closure = function(){
             var args = arguments;
@@ -17,6 +22,9 @@ var helpers = {
         };
         return closure;
     },
+    /**
+     * Defult promise reject handler. Used for debugging.
+     */
     reject_handler: function(){
         console.error("Universal reject handler. Arguments:", arguments);
         console.trace();
@@ -79,13 +87,26 @@ var helpers = {
     
 };
 
+/**
+ * Main application code goes here
+ */
 var lib = {
-    current_version: "0.1.2",
+    /**
+     * Current version of code. If it differs from stored value, session would be cleared and restarted
+     * @type String
+     */
+    current_version: "0.1.3",
+    /**
+     * Simple configuration parameters (values are function so it can be dinamically computable)
+     */
     conf: {
+        //Size of RSA key. Too large value make generation of key very long, and QR-code too complicated.
         key_size: function() { return 1024; },
+        //Second after thich keys would expire (in localstorage)
         expire_delta_sec: function() { return 24 * 3600; }
     },
     core: {
+        // Application main init function
         init: function(){
             
             lib.broadcast.init();
@@ -203,6 +224,10 @@ var lib = {
             
             lib.clipboard.init();
         },
+        /**
+         * Check for versions change
+         * @returns {Boolean}
+         */
         is_version_changed: function(){
             var res = false;
             var saved_version = lib.storage.get_local("lib_version");
@@ -220,6 +245,9 @@ var lib = {
             return res;
         }
     },
+    /**
+     * Browser's clipboard function library
+     */
     clipboard: {
         obj: null,
         init: function(){
@@ -250,8 +278,15 @@ var lib = {
             console.error('Trigger:', e.trigger);
         }
     },
+    /**
+     * Library to take cross-tab lock (only single tab can get lock)
+     */
     lock: {
         debug: false,
+        /**
+         * Initialization
+         * @returns {undefined}
+         */
         init: function(){
             lib.broadcast.add_listener("lock_already_taken", lib.lock.on_lock_already_taken_handler);
             lib.broadcast.add_listener("you_can_take_lock", lib.lock.on_you_can_take_lock_handler);  
@@ -266,6 +301,7 @@ var lib = {
          * @param {int} release_timeout After what time lock should be automatically released, if it didn't happen manually (msec), default 20000
          * @param {int} await_timeout Interval to receive message "lock_already_taken" to not acquire lock (msec), default 500
          * @param {int} check_interval Interval to send broadcast message "can_i_take_lock" (msec), default 100
+         * @param {Promise} promise that resolves then lock is taken
          */
         get: function(lock_name, giveup_timeout, release_timeout, await_timeout, check_interval){
             giveup_timeout = giveup_timeout || 2000;
@@ -378,6 +414,10 @@ var lib = {
             return promise;
             
         },
+        /**
+         * Free previously acquired lock
+         * @param {string} lock_name
+         */
         free: function(lock_name) {
             if (lib.lock.debug) console.log("lib.lock.free(", lock_name , ")");
                 
@@ -387,12 +427,24 @@ var lib = {
                 delete lib.lock.acquired_locks[lock_name];
             }
         },
+        /**
+         * Acquire lock, then run callback, then automatically frees lock
+         * @param {string} lock_name name of lock
+         * @param {function} callback function to run after lock is taken
+         * @param {int} giveup_timeout How much time to wait for successfule actire (msec), default 2000
+         * @param {int} release_timeout After what time lock should be automatically released, if it didn't happen manually (msec), default 20000
+         * @param {int} await_timeout Interval to receive message "lock_already_taken" to not acquire lock (msec), default 500
+         * @param {int} check_interval Interval to send broadcast message "can_i_take_lock" (msec), default 100
+         */
         with: function(lock_name, callback, giveup_timeout, release_timeout, await_timeout, check_interval) {
             lib.lock.get(lock_name, giveup_timeout, release_timeout, await_timeout, check_interval).then(function(){
                 callback();
                 lib.lock.free(lock_name);
             }, helpers.reject_handler)
         },
+        /**
+         * Analog of "with" function, but, takes function, that returns promise, and return it's promise, then, automatically frees lock
+         */
         with_promise: function(lock_name, callback_returning_promise, giveup_timeout, release_timeout, await_timeout, check_interval) {
             if (lib.lock.debug) console.log("lib.lock.with_promise(", lock_name, ")");
             return lib.lock.get(lock_name, giveup_timeout, release_timeout, await_timeout, check_interval).then(function(){
@@ -408,6 +460,10 @@ var lib = {
                 });
             }, helpers.reject_handler);
         },
+        /**
+         * Event handler what is called then other tab asks "can i take lock?"
+         * @param {Object} data - data arrived from broadcast
+         */
         on_can_i_take_lock_handler: function(data){
             if (lib.lock.debug) console.log("lib.lock.on_can_i_take_lock_handler(", data , ")");
             
@@ -450,6 +506,11 @@ var lib = {
                 });
             }
         },
+        /**
+         * Event handler that is called then other tab say "I've already taken the lock!"
+         * @param {Object} data
+         * @returns {undefined}
+         */
         on_lock_already_taken_handler: function(data){            
             if (lib.lock.debug) console.log("lib.lock.on_lock_already_taken_handler(", data , ")");
             
@@ -460,27 +521,54 @@ var lib = {
                 lib.lock.acquiring_process[lock_name].lock_taken_arrived = true;
             }
         },
+        /**
+         * Event handler that is called than other tab say "Yes, you can take the lock"
+         * @param {type} data
+         * @returns {undefined}
+         */
         on_you_can_take_lock_handler: function(data){
-            
             
         }
     },
+    /**
+     * Cross-tab broadcast messaging and event system.
+     * Allows to send messages between tabs of a single browser.
+     * Used to share keys between tabs, or send signal to clear session on all tasks, if user asks so.
+     * 
+     * Based on browsers's BroadcastChannel, of BroadcastChannel2 (based on a library https://github.com/pubkey/broadcast-channel)
+     * Safari browser doesn't support BroadcastChannel, so BroadcastChannel2 come to the rescue
+     */
     broadcast: {
         channel: null,
         debug: false,
+        /**
+         * Initialize channel
+         */
         init: function(){
             var bc = window.BroadcastChannel || window.BroadcastChannel2
             lib.broadcast.channel = new bc('cryptboard-main');
             lib.broadcast.channel.onmessage = lib.broadcast.receive_raw;
             lib.broadcast.set_default_listeners();
         },
+        /**
+         * Close channel
+         */
         close: function(){
             lib.broadcast.channel.close();
         },
+        /**
+         * Send raw data to channel
+         * @param {Object} message
+         */
         post_raw: function(message)
         {
             lib.broadcast.channel.postMessage(message);
         },
+        /**
+         * Send data with specific type (type is used to detect event handler that should be called)
+         * @param {string} type The type of message
+         * @param {Object} data Data (could be empty)
+         */
         post: function(type, data)
         {
             if (lib.broadcast.debug) console.log("broadcast.post(", type, data, ")");
@@ -490,6 +578,11 @@ var lib = {
                 "data": data
             });
         },
+        /**
+         * Raw of data
+         * Works universally on BroadcastChannel or BroadcastChannel2
+         * @param {Event|Object} d 
+         */
         receive_raw: function(d)
         {
             // If native BroadcastChannel used:
@@ -521,6 +614,12 @@ var lib = {
             }
             lib.broadcast.receive(res['type'], res['data']);
         },
+        /**
+         * Receiver of data with type and usefull payload. 
+         * Detects what event listeners to call, and call them
+         * @param {String} type
+         * @param {Object} data
+         */
         receive: function(type, data)
         {
             if (lib.broadcast.debug) console.log("broadcast.receive(", type, data, ")");
@@ -534,9 +633,20 @@ var lib = {
                 }
             }
         },
+        /**
+         * Listeners would be added here
+         */
         listeners: {
-            
         },
+        /**
+         * Add event listener
+         * @param {String} type - the type on which event handler would be called
+         * @param {function} func - handler itself
+         * @param {boolean} once - if true, handler would be removed after it's called
+         * @param {type} timeout - if set there are timeout after that handler would be removed
+         * @param {type} func_on_timeout - function that should be called when timeout happened
+         * @param {type} func_check_once_need_to_be_cleaned - function to check input data to detect, if once-handler should be removed
+         */
         add_listener: function(type, func, once, timeout, func_on_timeout, func_check_once_need_to_be_cleaned){
             once = once || false;
             timeout = timeout || -1;
@@ -577,6 +687,10 @@ var lib = {
                 return res;
             };
         },
+        /**
+         * Set default listeners that are used accross the app
+         * @todo move it into lib.core.ini
+         */
         set_default_listeners: function(){
             // If we got message "give me private key" - lets send private key back
             lib.broadcast.add_listener("give_me_private_key", function(data){
@@ -605,6 +719,13 @@ var lib = {
                 window.location.reload();
             })
         },
+        /**
+         * Request private key from other tab.
+         * Used if private key was hided from localstorage (lib.crypto.hide_private_key)
+         * @param {integer} timeout - how many time to wait before giveup
+         * @param {integer} retries - how many times to send "give_me_key" message
+         * @returns {Promise}
+         */
         request_private_key: function(timeout, retries){
             retries = retries || 3;
             timeout = timeout || 2000;
@@ -674,15 +795,34 @@ var lib = {
             });
         }
     },
+    /**
+     * Library to generate avatars based on uid and public_key
+     */
     avatar: {
+        /**
+         * Caching in runtime
+         */
         all_variants_cached: null,
         params_by_str_cache: {},
+        /**
+         * Get all params that can be changes in avatar generation library.
+         * @returns {Array}
+         */
         get_changable_params: function(){
             return Avataaars.getEditableTypes().reverse();
         },
+        /**
+         * Create avatar from configured params
+         * @param {Object} params
+         * @returns {String} svg of avatar
+         */
         create_svg_simple: function(params){
             return Avataaars.create(params);
         },
+        /**
+         * Get all variants of params
+         * @returns {data}
+         */
         get_all_variants: function(){
             if (lib.avatar.all_variants_cached === null)
             {
@@ -698,8 +838,13 @@ var lib = {
             }
             return lib.avatar.all_variants_cached;
         },
+        /**
+         * Create SVG avatar by integer number
+         * @param {INteger} number
+         * @returns {String|lib.avatar.empty_avatar} SVG of avatar
+         */
         create_svg_by_number: function(number){
-            if (number == -1)
+            if (number === -1)
             {
                 return lib.avatar.empty_avatar;
             }
@@ -709,18 +854,41 @@ var lib = {
                 return lib.avatar.create_svg_simple(params);
             }
         },
+        /**
+         * Create SVG avatar by any string
+         * @param {type} str
+         * @returns {String}
+         */
         create_svg_by_str: function(str){
             var params = lib.avatar.get_params_by_str(str);
             return lib.avatar.create_svg_simple(params);
         },
+        /**
+         * Create SVG avatar by uid and public_key
+         * @param {string} uid 
+         * @param {string} public_key
+         * @returns {String} SVG avatar
+         */
         create_svg_by_user: function(uid, public_key){
             return lib.avatar.create_svg_simple(lib.avatar.get_params_by_user(uid, public_key));
         },
+        /**
+         * Get params (for avatar rendering) by uid and public_key
+         * @param {type} uid
+         * @param {type} public_key
+         * @returns {unresolved}
+         */
         get_params_by_user: function(uid, public_key){
             var s = "uid:" + uid + ":key:" + lib.crypto.get_public_key_for_share(public_key);
             var params = lib.avatar.get_params_by_str(s);
             return params;
         },
+        /**
+         * Get integer number by uid and public_key
+         * @param {type} uid
+         * @param {type} public_key
+         * @returns {Number} number
+         */
         get_number_by_user: function(uid, public_key){
             if (uid && public_key && lib.crypto.validate_public_key(public_key))
             {
@@ -734,6 +902,10 @@ var lib = {
                 return -1;
             }
         },
+        /**
+         * Get avatar params by string
+         * @param {String} str
+         */
         get_params_by_str: function(str){
             var hash = lib.crypto.sha256(str);
             if (!lib.avatar.params_by_str_cache[hash])
@@ -744,6 +916,11 @@ var lib = {
             }
             return lib.avatar.params_by_str_cache[hash];
         },
+        /**
+         * Get params indexes by number
+         * @param {Integer} number
+         * @returns {Array}
+         */
         get_params_indexes_by_number: function(number)
         {
             var all_v = lib.avatar.get_all_variants();
@@ -761,6 +938,10 @@ var lib = {
             };
             return values;
         },
+        /**
+         * Get params by number
+         * @param {Integer} number
+         */
         get_params_by_number: function(number){
             
             var all_v = lib.avatar.get_all_variants();
@@ -773,6 +954,10 @@ var lib = {
             }
             return ps;
         },
+        /**
+         * Empty avatar SVG (question mark in a black circle)
+         * @type String
+         */
         empty_avatar: `
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_1" x="0px" y="0px" viewBox="-2 -2 31.536 31.536" style="enable-background:new 0 0 29.536 29.536;" xml:space="preserve">
                 <g>
@@ -3629,7 +3814,7 @@ var lib = {
             }
         },
         unhide_private_key: function() {
-            if (lib.crypto.keys['private'])
+            if (lib.crypto.keys['private'] && !lib.storage.get_local("private_key"))
             {
                 lib.storage.set_local("private_key", lib.crypto.keys['private']);
             }
@@ -3657,8 +3842,11 @@ var lib = {
                         private: crypt.getPrivateKey(),
                         public: crypt.getPublicKey()
                     };
-                    lib.crypto.set_keys(result),
-                    lib.crypto.hide_private_key()
+                    lib.crypto.set_keys(result);
+                    if (!lib.ui.is_mobile())
+                    {
+                        lib.crypto.hide_private_key();
+                    }
                     resolve(result);
                 });
             });
