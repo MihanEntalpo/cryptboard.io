@@ -1,7 +1,10 @@
 name: deploy-main
-on: [push]
+on: 
+  push:
+    branches:
+      - main
 jobs:
-  check-bats-version:
+  deploy-main:
     runs-on: self-hosted
     steps:
       - run: bash -c "cd ~/cryptboard.io && git pull && cd ./web-app && export HOME=/home/cryptboard && composer install"
