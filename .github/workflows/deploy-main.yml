@@ -4,5 +4,5 @@ jobs:
   check-bats-version:
     runs-on: self-hosted
     steps:
-      - run: bash "cd ~/cryptoard.io && git clone && composer install"
+      - run: bash -c "cd ~/cryptoard.io && git clone && composer install"
 
