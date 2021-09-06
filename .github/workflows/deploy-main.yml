@@ -1,0 +1,8 @@
+name: deploy-main
+on: [push]
+jobs:
+  check-bats-version:
+    runs-on: self-hosted
+    steps:
+      - run: bash "cd ~/cryptoard.io && git clone && composer install"
+
