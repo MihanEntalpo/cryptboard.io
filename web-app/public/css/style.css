@@ -229,7 +229,7 @@ main .tab.active
 
 .send .text
 {
-    padding-right:49px;
+    /*padding-right:49px;*/
 }
 
 .send .text textarea
@@ -561,4 +561,15 @@ table.files-select-table tr.file-row
 .full-width
 {
     width:100%;
+}
+
+.horizontal-buttons
+{
+    text-align: right;
+    padding-bottom: 5px;
+}
+
+.grey
+{
+    color: grey;
 }
