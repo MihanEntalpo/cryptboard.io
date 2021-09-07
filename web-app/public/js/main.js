@@ -2104,7 +2104,7 @@ var lib = {
 
                             if (file_msg_obj.data.is_loaded)
                             {
-                                return p.then(lib.files.reconstruct_file_from_parts(file_msg_id), helpers.reject_handler);
+                                return p.then(function(){ lib.files.plan_file_reconstruction(file_msg_id); }, helpers.reject_handler);
                             }
                             else
                             {
@@ -2438,6 +2438,13 @@ var lib = {
                 reader.readAsDataURL(file);       
             
             });
+        },
+        plan_file_reconstruction: function(file_msg_id) {
+            setTimeout(
+                function(){
+                    lib.files.reconstruct_file_from_parts(file_msg_id);
+                }, 1000
+            );
         },
         reconstruct_file_from_parts: function(file_msg_id)
         {
