@@ -3649,7 +3649,10 @@ var lib = {
                 
                 parse_promise.then(function(msg){
 
-                    delete msg['payload'];
+                    if (msg['type'] !== 'unknown')
+                    {
+                        delete msg['payload'];
+                    }
 
                     accept(msg);
                     
