@@ -10,7 +10,7 @@
         <script src="/js/libs/popper.min.js"></script>
         <link rel="stylesheet" href="/bootstrap-5.0.2-dist/css/bootstrap.min.css" >
         <link rel="stylesheet" href="/css/jquery.arcticmodal.css" >
-        <link rel="stylesheet" href="/css/style.css" >
+        <link rel="stylesheet" href="/css/style.css?hash=<?=md5_file(__DIR__ . "/../../public/css/style.css")?>" >
 
         <script src="/js/libs/jsencrypt.js"></script>
         <script src="/fontawesome-free-5.15.3-web/js/all.js"></script>
@@ -32,8 +32,8 @@
         <!-- Later we will implement openpgp encryption -->
         <!-- <script src="/js/openpgp.js"></script> -->
         
-        <script src="/js/env.js"></script>
-        <script src="/js/main.js"></script>
+        <script src="/js/env.js?hash=<?=md5_file(__DIR__ . "/../../public/js/env.js")?>"></script>
+        <script src="/js/main.js?hash=<?=md5_file(__DIR__ . "/../../public/js/main.js")?>"></script>
 
     </head>
     <body>

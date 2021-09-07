@@ -219,8 +219,7 @@ var lib = {
             }, true);
             
             $('#text_to_send').keydown(lib.ui.msg.send_ctrl_enter);
-            
-            //$('input.form-check-input[type=checkbox]').bootstrapSwitch();
+            $('#text_to_send').on("change keyup paste cut copy", lib.ui.msg.message_change);
             
             lib.clipboard.init();
         },
@@ -989,6 +988,17 @@ var lib = {
             send_ctrl_enter: function(e){
                 if (e.ctrlKey && e.keyCode === 13) {
                     lib.ui.msg.send_btn_click();
+                }
+                
+            },
+            message_change: function() {
+                if (lib.tools.trim($('#text_to_send').val()) !== '')
+                {
+                    $('#send_text_button').prop("disabled", false);
+                }
+                else
+                {
+                    $('#send_text_button').prop("disabled", true);
                 }
             },
             delete: function(msg_ids) {
@@ -2034,9 +2044,9 @@ var lib = {
         }
     },
     files: {
-        debug: true,
+        debug: false,
         max_file_size: 1024 * 1024 * 10,
-        file_part_size: 1024 * 100,
+        file_part_size: 1024 * 200,
         update_file_parts: function(file_id){
             return Promise.resolve().then(function(){ 
                 return lib.storage.get(
@@ -2094,7 +2104,7 @@ var lib = {
 
                             if (file_msg_obj.data.is_loaded)
                             {
-                                return p.then(lib.files.reconstruct_file_from_parts(file_msg_id), helpers.reject_handler);
+                                return p.then(function(){ lib.files.plan_file_reconstruction(file_msg_id); }, helpers.reject_handler);
                             }
                             else
                             {
@@ -2429,6 +2439,13 @@ var lib = {
             
             });
         },
+        plan_file_reconstruction: function(file_msg_id) {
+            setTimeout(
+                function(){
+                    lib.files.reconstruct_file_from_parts(file_msg_id);
+                }, 1000
+            );
+        },
         reconstruct_file_from_parts: function(file_msg_id)
         {
             return lib.storage.get("msg:" + file_msg_id).then(function(file_msg_obj){
@@ -2563,6 +2580,9 @@ var lib = {
         },
         fromJson: function(data) {
             return JSON.parse(data);
+        },
+        trim: function(val) {
+            return val.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
         }
     },
     tabs: {
@@ -3642,7 +3662,7 @@ var lib = {
         }
     },
     crypto: {
-        debug: true,
+        debug: false,
         rsa_encrypt_data: function(data, public_key){
             var e = new JSEncrypt();
             e.setPublicKey(public_key);
