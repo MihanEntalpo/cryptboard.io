@@ -113,7 +113,7 @@ Router::add("/clear", function(){
 
 Router::add("/send", function(){
     $uid = JWTH::auth_bearer($data);
-    Router::throttle($uid, "send", 200);
+    Router::throttle($uid, "send", 50);
     
     $receiver = post("receiver");
     $payload = post("payload");
@@ -133,7 +133,7 @@ Router::add("/send", function(){
 
 Router::add("/send-multi", function(){
     $uid = JWTH::auth_bearer($data);
-    Router::throttle($uid, "send-multi", 200);
+    Router::throttle($uid, "send-multi", 50);
     
     $msgs = post("msgs");
     if (!$msgs) 
