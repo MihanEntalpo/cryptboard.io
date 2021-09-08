@@ -1932,7 +1932,10 @@ var lib = {
                             var msgs_by_id = {};
 
                             msgs.forEach(function(msg){
-                                msgs_by_id[msg['id']] = msg;
+                                if (msg)
+                                {
+                                    msgs_by_id[msg['id']] = msg;
+                                }
                             });
 
                             var render_promises = [];
@@ -1940,7 +1943,7 @@ var lib = {
                             msg_ids.forEach(function(msg_id){
                                 var msg = msgs_by_id[msg_id];
                                 
-                                if (existing_msgs.hasOwnProperty(msg_id))
+                                if (!msg || existing_msgs.hasOwnProperty(msg_id))
                                 {
                                     return Promise.resolve();
                                 }
@@ -3290,7 +3293,7 @@ var lib = {
     },
     msg: {
         debug: false,
-        interval: 350,
+        interval: 100,
         get_id: function(msg_id) {
             return "msg:" + lib.client.uid + ":" + msg_id;
         },
@@ -3690,6 +3693,11 @@ var lib = {
             return decrypted;
         },
         hybrid_encrypt_data: function(data, public_key){
+            if (data === null)
+            {
+                // Please close DevTools :) You are not supposed to see this
+                debugger;
+            }
             var aes_key = lib.crypto.get_radnom_aes_key();
             var aes_iv = lib.crypto.get_random_aes_initial_vector();
             var key_and_ivector = {
