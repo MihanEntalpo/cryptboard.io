@@ -2207,7 +2207,7 @@ var lib = {
         },
         auto_send_file_processor: new helpers.IntervalCaller(function() {
             return lib.files.process_send_file_queue();
-        }, 350, "auto_send_file_processor", false),
+        }, 150, "auto_send_file_processor", false),
         process_send_file_queue: function(){
             var current_sending_files = lib.storage.get_local("current_sending_files", []);
             if (!current_sending_files || current_sending_files.length === 0) return;
