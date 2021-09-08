@@ -103,7 +103,7 @@ var lib = {
         //Size of RSA key. Too large value make generation of key very long, and QR-code too complicated.
         key_size: function() { return 1024; },
         //Second after thich keys would expire (in localstorage)
-        expire_delta_sec: function() { return 24 * 3600; }
+        expire_delta_sec: function() { return 24 * 3600 * 31; }
     },
     core: {
         // Application main init function
