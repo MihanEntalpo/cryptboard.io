@@ -1099,7 +1099,7 @@ var lib = {
                     files.forEach(function(file){
                         var index = file.index;
                         var selected = $(modal).find(`.file-select-checkbox[data-num=${index}]`).prop('checked') && file.size <= lib.files.max_file_size;
-                        var comment = $(modal).find(`textarea.file-comment[data-num=${index}]`).val();
+                        var comment = lib.tools.trim($(modal).find(`textarea.file-comment[data-num=${index}]`).val());
                         if (selected)
                         {
                             file.comment = comment;
