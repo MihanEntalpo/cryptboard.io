@@ -133,7 +133,10 @@ var lib = {
                     return lib.ajax.check_refresh_auth().then(function(res){
                         lib.ui.popover.set_li_icon("auth", "fa-check-square");                    
                     }).catch(function(err){
-                        lib.ui.popover.set_li_icon("auth", "fa-exclamation-triangle");                                        
+                        lib.ui.popover.set_li_icon("auth", "fa-exclamation-triangle"); 
+                        lib.modal.alert("Auth Erro", "Inital authentication failed! Page would be reloaded", function(){
+                            window.location.reload();
+                        });
                     }).then(function(){
                         lib.lock.free("initial-auth");
                     })
@@ -182,7 +185,8 @@ var lib = {
             }, helpers.reject_handler);
 
             function closingCode(){
-               lib.crypto.unhide_private_key();
+               //Unhide of the private key temporary disabled as it not working as it should
+               //lib.crypto.unhide_private_key();
                return null;
             }
             window.onbeforeunload = closingCode;
@@ -3020,7 +3024,7 @@ var lib = {
                     );
                 });
             }).catch(function(err){
-                lib.modal.alert("Auth error", "Error on authorization: " + JSON.stringify(err) + ", page would be reloaded", function(){
+                lib.modal.alert("Auth error", "Error on authorization. Possible network error. Please reload page", function(){
                     window.location.reload();
                 });
                 throw err;
@@ -3030,6 +3034,7 @@ var lib = {
             return lib.ajax.call("POST", "/check").then(function(res){
                 if (res['check'] === "ok")
                 {
+                    lib.crypto.prolong_expire();
                     return lib.client.set_uid(res['uid']).then(function(){
                         return res['uid']
                     });
@@ -3070,14 +3075,29 @@ var lib = {
                     if (lib.ajax.debug) console.log("Token is correct");
                     resolve();
                 }).catch(function(err) {
-                    if (lib.ajax.debug) console.log("Token is incorrect, trying to refresh!")
-                    lib.ajax.refresh().then(function(res) {
-                        if (lib.ajax.debug) console.log("Token refreshed successfully!");
-                        resolve();
-                    }).catch(function(err) {
-                        if (lib.ajax.debug) console.log("Token refreshment error:", err)
-                        reject();                        
-                    });
+                    if (err && err.error && err.error === "jwt_error")
+                    {
+                        if (lib.ajax.debug) console.log("Token is incorrect, trying to refresh!")
+                        lib.ajax.refresh().then(function(res) {
+                            if (err && err.error && err.error === "jwt_error")
+                            {
+                                if (lib.ajax.debug) console.log("Token refreshed successfully!");
+                                resolve();
+                            }
+                            else
+                            {
+                                reject();
+                            }
+                        }).catch(function(err) {
+                            if (lib.ajax.debug) console.log("Token refreshment error:", err)
+                            reject();                        
+                        });
+                    }
+                    else
+                    {
+                        console.log("Looks like networking error", err);
+                        reject();
+                    }
                 });
             });
         },
@@ -3088,20 +3108,37 @@ var lib = {
                     if (lib.ajax.debug) console.log("Token is correct!");
                     resolve();
                 }).catch(function(err) {
-                    if (lib.ajax.debug) console.log("Token is incorrect, trying to refresh!")
-                    lib.ajax.refresh().then(function(res) {
-                        if (lib.ajax.debug) console.log("Token refreshed successfully!");
-                        resolve()
-                    }).catch(function(err) {
-                        if (lib.ajax.debug) console.log("Token refreshment error:", err, ", trying to auth");
-                        lib.ajax.auth().then(function(res) {
-                            if (lib.ajax.debug) console.log("Auth successfull");
-                            resolve();
+                    if (err && err.error && err.error === "jwt_error")
+                    {
+                        if (lib.ajax.debug) console.log("Token is incorrect, trying to refresh!")
+                        lib.ajax.refresh().then(function(res) {
+                            if (lib.ajax.debug) console.log("Token refreshed successfully!");
+                            resolve()
                         }).catch(function(err) {
-                            if (lib.ajax.debug) console.log("Auth error:", err);
-                            reject();
+                            
+                            if (err && err.error && err.error === "jwt_error")
+                            {
+                                if (lib.ajax.debug) console.log("Token refreshment error:", err, ", trying to auth");
+                                lib.ajax.auth().then(function(res) {
+                                    if (lib.ajax.debug) console.log("Auth successfull");
+                                    resolve();
+                                }).catch(function(err) {
+                                    if (lib.ajax.debug) console.log("Auth error:", err);
+                                    reject();
+                                });
+                            }
+                            else
+                            {
+                                console.log("Looks like some networking error", err);
+                                reject();
+                            }
                         });
-                    });
+                    }
+                    else
+                    {
+                        console.log("Looks like some networking error", err);
+                        reject();
+                    }
                 });
             });
         },
@@ -3834,8 +3871,11 @@ var lib = {
                 private_key = null;
                 public_key = null;
             }
+            
             lib.crypto.keys = {"private": private_key, "public": public_key, "expire": keys_expire};
-            lib.crypto.hide_private_key()
+            // Hide of the private key temporary disabled as it not working as it should
+            // lib.crypto.hide_private_key()
+            
             return lib.crypto.keys;                   
         },
         hide_private_key: function() {
@@ -3849,6 +3889,9 @@ var lib = {
             {
                 lib.storage.set_local("private_key", lib.crypto.keys['private']);
             }
+        },
+        prolong_expire: function(){
+            lib.storage.set_local("keys_expire", (lib.date.timestamp() + lib.conf.expire_delta_sec()));
         },
         set_keys: function(key){
             var expire = key['expire'] || (lib.date.timestamp() + lib.conf.expire_delta_sec());
@@ -3874,10 +3917,8 @@ var lib = {
                         public: crypt.getPublicKey()
                     };
                     lib.crypto.set_keys(result);
-                    if (!lib.ui.is_mobile())
-                    {
-                        lib.crypto.hide_private_key();
-                    }
+                    // Unhide of the private key temporary disabled as it not working as it should
+                    // lib.crypto.hide_private_key();
                     resolve(result);
                 });
             });
