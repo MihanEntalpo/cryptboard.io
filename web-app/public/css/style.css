@@ -67,6 +67,7 @@ main .tab.active
     position: absolute;
     right: 0px;
     bottom: 0px;
+    opacity: 0.5;
 }
 
 .message.contentless
@@ -552,10 +553,23 @@ table.files-select-table tr.file-row
 
 .message .delete-button
 {
+    display: block;
     position: absolute;
-    right: 5px;
-    top: -1px;
+    right: 4px;
+    top: 1px;
     cursor: pointer;
+    background: white;
+    border-radius: 2px;
+    width: 16px;
+    height: 16px;
+    padding-top: -5px;
+}
+
+.message .delete-button svg
+{
+    position: absolute;
+    right: 1px;
+    top: -1px;
 }
 
 .full-width
