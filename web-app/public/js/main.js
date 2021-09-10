@@ -1386,7 +1386,7 @@ var lib = {
                 "encrypted": {
                     "icon": "fa-lock",         
                     "color": "green",
-                    "title": "Message came encrypted. Server couldn't see it contents."
+                    "title": "Message came encrypted. Server couldn&rsquo;t see it contents."
                 },
                 "unencrypted": {
                     "icon": "fa-lock-open",     
