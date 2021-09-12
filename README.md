@@ -4,6 +4,8 @@ Cryptboard.io allows to send text and files between multiple devices with securi
 
 Website: https://cryptboard.io/
 
+![Screenshot of a clipboard page](img/screenshot_1.png)
+
 ## Features
 
 * Anonymous authorization on server without need of registration
