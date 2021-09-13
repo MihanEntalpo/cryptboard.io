@@ -990,8 +990,12 @@ var lib = {
         msg: {
             enable_send_files: true,
             send_ctrl_enter: function(e){
-                if (e.ctrlKey && e.keyCode === 13) {
+                if ((!e.ctrlKey && !e.shiftKey) && e.keyCode === 13) {
                     lib.ui.msg.send_btn_click();
+                }
+                if (e.ctrlKey && e.keyCode === 13)
+                {
+                    $('#text_to_send').val($('#text_to_send').val() + "\n");
                 }
                 
             },
