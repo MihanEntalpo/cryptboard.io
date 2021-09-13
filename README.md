@@ -1,4 +1,4 @@
-# CryptBoard.io - anonymous encrypted web clipboard
+# CryptBoard.io - anonymous encrypted web clipboard and char
 
 Cryptboard.io allows to send text and files between multiple devices 
 
