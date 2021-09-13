@@ -34,7 +34,7 @@
                       onkeydown='lib.ui.msg.send_ctrl_enter()'
                       disabled
                       >
-                      Send message <span class="grey">(ctrl+enter)</span> <i class='fa fa-arrow-circle-right idle'></i>
+                      Send message <span class="grey">(enter)</span> <i class='fa fa-arrow-circle-right idle'></i>
                         </button>
               <input type="file"  style="display: none;" id="file-selector" multiple onchange="lib.ui.msg.send_file_selected(event, this)">
           </div>
