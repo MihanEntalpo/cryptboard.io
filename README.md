@@ -54,4 +54,11 @@ Details on secure usage could be found at https://cryptboard.io/#tab=security
 * docker-compose
 * Nginx on the host machine
 
+### Old good dockerless installation
+
+**Prerequisites:**
+
+* Nginx
+* Redis-server
+* 
 

@@ -39,7 +39,9 @@
               <input type="file"  style="display: none;" id="file-selector" multiple onchange="lib.ui.msg.send_file_selected(event, this)">
           </div>
       </div>
+      <div class="copy-button" id="single-copy-button"><button class="btn btn-success btn-sm" title="select all text and copy" ><i class="fa fa-clipboard"></i></button></div>
       <div class="messages">
+          
       </div>      
     </div>  
     <div class="col-4 receivers-wrapper">
