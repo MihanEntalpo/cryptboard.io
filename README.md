@@ -1,4 +1,4 @@
-# CryptBoard.io - anonymous encrypted web clipboard
+# CryptBoard.io - anonymous encrypted web clipboard and char
 
 Cryptboard.io allows to send text and files between multiple devices 
 
@@ -54,4 +54,11 @@ Details on secure usage could be found at https://cryptboard.io/#tab=security
 * docker-compose
 * Nginx on the host machine
 
+### Old good dockerless installation
+
+**Prerequisites:**
+
+* Nginx
+* Redis-server
+* 
 

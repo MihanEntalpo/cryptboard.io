@@ -112,6 +112,8 @@ var lib = {
             lib.broadcast.init();
             lib.lock.init();
             
+            var keys_was_generated = false;
+            
             var keys_events = {
                 "before_get_keys": function(){ lib.ui.popover.set_li_icon("keys-read", "fa-cog fa-spin"); }, 
                 "after_get_keys_ok": function(){ lib.ui.popover.set_li_icon("keys-read", "fa-check-square"); },
@@ -120,7 +122,7 @@ var lib = {
                 "after_acquire_ok": function(){ lib.ui.popover.set_li_icon("keys-await", "fa-check-square"); }, 
                 "after_acquire_err": function(){ lib.ui.popover.set_li_icon("keys-await", "fa-times-circle"); },
                 "before_generate":function(){ lib.ui.popover.set_li_icon("keys-generate", "fa-cog fa-spin"); }, 
-                "after_generate_ok":function(){ lib.ui.popover.set_li_icon("keys-generate", "fa-check-square"); }
+                "after_generate_ok":function(){ lib.ui.popover.set_li_icon("keys-generate", "fa-check-square"); keys_was_generated = true; }
             };
             
             Promise.all([
@@ -150,11 +152,19 @@ var lib = {
             }, helpers.reject_handler).then(function(){
                 $('#init-popover li[name=done] > .icon').html("<i class='fa fa-check-square'></i>");
                 $('#init-popover li[name=done]').fadeIn(800);
-                return new Promise(function(ok, err) { 
+                return new Promise(function(ok, err) {
+                    if (keys_was_generated)
+                    {
+                        var t = 800;
+                    }
+                    else
+                    {
+                        var t = 200;
+                    }
                     setTimeout(function(){
                         $("#init-popover").fadeOut(800);
                         ok(true);
-                    }, 800);
+                    }, t);
                 });
             }, helpers.reject_handler).then(() => lib.receivers.add_myself(), helpers.reject_handler).then(function(){
                 
@@ -221,6 +231,8 @@ var lib = {
             window.addEventListener('resize', function(event) {
                 lib.ui.on_window_resize(event);
             }, true);
+            
+            lib.ui.msg.copy_button_init();
             
             $('#text_to_send').keydown(lib.ui.msg.send_ctrl_enter);
             $('#text_to_send').on("change keyup paste cut copy", lib.ui.msg.message_change);
@@ -988,6 +1000,43 @@ var lib = {
             lib.ui.share_key.update_qrcode_size();
         },
         msg: {
+            copy_button_init: function(){
+                $(".messages").on("click", '.copyable-block', function(event){
+                    lib.ui.msg.copy_button_show($(event.target), event);
+                });
+                $('document').on('click', ':not(.copyable-block),:not(#single-copy-button > button)', function(event){
+                    console.log("click out there");
+                });
+
+                lib.ui.msg.copy_button_obj.obj = new ClipboardJS("#single-copy-button > button", {
+                    target: function(trigger) {
+                        return lib.ui.msg.copy_button_element;
+                    }
+                });
+                lib.ui.msg.copy_button_obj.obj.on("success", lib.ui.msg.copy_button_obj.on_success);
+                lib.ui.msg.copy_button_obj.obj.on("error", lib.ui.msg.copy_button_obj.on_error);
+            },
+            copy_button_element: null,
+            copy_button_obj: {
+                obj: null, 
+                on_success: function(event){
+                    $('#single-copy-button').hide();
+                    lib.modal.alert("Copied successfull", "Copied successfull!");
+                },
+                on_error: function(event){
+                    $('#single-copy-button').hide();
+                    lib.modal.alert("Copy error", "Error on copying: " + lib.tools.toJson(event));
+                }
+            },
+            copy_button_show: function(element, event){
+                var childPos = $(element).offset();
+                $('#single-copy-button').show();
+                $('#single-copy-button').css({"left": parseInt(childPos.left) - 30 + "px", "top": parseInt(childPos.top) + "px"});
+                lib.ui.msg.copy_button_element = $(element)[0];          
+                setTimeout(function(){
+                    $('#single-copy-button').hide();
+                }, 5000);
+            },
             enable_send_files: true,
             send_ctrl_enter: function(e){
                 if ((!e.ctrlKey && !e.shiftKey) && e.keyCode === 13) {
@@ -1162,7 +1211,7 @@ var lib = {
                     "renderer": function(msg){
                         return Promise.resolve(`
                             <div class='msg-content'>
-                                <div class='text-container'>${lib.tools.escape(msg.data.text)}</div>
+                                <div class='text-container copyable-block'>${lib.tools.escape(msg.data.text)}</div>
                             </div>
                         `);
                     },
@@ -1224,7 +1273,7 @@ var lib = {
                         
                         var percent = (bytes_loaded / msg['data']['transfer_size'] * 100).toFixed(2);
                         
-                        var comment_block = comment ? `<div class='text-container'>${lib.tools.escape(comment)}</div>` : '';
+                        var comment_block = (comment && lib.tools.trim(comment)) ? `<div class='text-container copyable-block'>${lib.tools.escape(comment)}</div>` : '';
                         
                         var content = `<div class='file-content'>
                                             <div class='file-button ${is_loaded ? 'loaded' : ''} ${btn_color}' title='${title}' onclick='${btn_onclick}'>
