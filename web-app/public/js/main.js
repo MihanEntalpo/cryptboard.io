@@ -1019,9 +1019,25 @@ var lib = {
             copy_button_element: null,
             copy_button_obj: {
                 obj: null, 
-                on_success: function(event){
-                    $('#single-copy-button').hide();
-                    lib.modal.alert("Copied successfull", "Copied successfull!");
+                on_success: function(e){
+                    console.log(e.trigger);
+                    var prev_title = $(e.trigger).attr('title');
+                    $(e.trigger).attr("title", "Copied to clipboard");
+                    $(e.trigger).tooltip({
+                        container: 'body',
+                        html: true,
+                        trigger: 'manual'
+                    }).tooltip('show');
+
+                    setTimeout(function () {
+                        $(e.trigger).tooltip('hide');
+                        $('#single-copy-button').hide();
+                    
+                    }, 800);
+
+                    $(e.trigger).attr("title", prev_title);
+                    e.clearSelection();
+                    
                 },
                 on_error: function(event){
                     $('#single-copy-button').hide();
