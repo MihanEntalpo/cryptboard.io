@@ -1004,10 +1004,7 @@ var lib = {
                 $(".messages").on("click", '.copyable-block', function(event){
                     lib.ui.msg.copy_button_show($(event.target), event);
                 });
-                $('document').on('click', ':not(.copyable-block),:not(#single-copy-button > button)', function(event){
-                    console.log("click out there");
-                });
-
+                
                 lib.ui.msg.copy_button_obj.obj = new ClipboardJS("#single-copy-button > button", {
                     target: function(trigger) {
                         return lib.ui.msg.copy_button_element;
@@ -1015,8 +1012,48 @@ var lib = {
                 });
                 lib.ui.msg.copy_button_obj.obj.on("success", lib.ui.msg.copy_button_obj.on_success);
                 lib.ui.msg.copy_button_obj.obj.on("error", lib.ui.msg.copy_button_obj.on_error);
+                
+                $(document).ready(function() {
+                    var ctrlDown = false,
+                        ctrlKey = 17,
+                        cmdKey = 91,
+                        vKey = 86,
+                        cKey = 67;
+
+                    $(document).keydown(function(e) {
+                        if (e.keyCode == ctrlKey || e.keyCode == cmdKey) ctrlDown = true;
+                    }).keyup(function(e) {
+                        if (e.keyCode == ctrlKey || e.keyCode == cmdKey) ctrlDown = false;
+                    });
+
+                    $(".no-copy-paste").keydown(function(e) {
+                        if (ctrlDown && (e.keyCode == vKey || e.keyCode == cKey)) return false;
+                    });
+
+                    // Document Ctrl + C/V 
+                    $(document).keydown(function(e) {
+                        if (ctrlDown && (e.keyCode === cKey)) lib.ui.msg.copy_button_ctrl_c();
+                        if (ctrlDown && (e.keyCode === vKey)) console.log("Document catch Ctrl+V");
+                    });
+                });
+            },
+            copy_button_ctrl_c: function(){
+                var text = "";
+                if (window.getSelection) {
+                    text = window.getSelection().toString();
+                } else if (document.selection && document.selection.type != "Control") {
+                    text = document.selection.createRange().text;
+                }
+
+                text = lib.tools.trim(text);
+                
+                if (!text)
+                {
+                    $("#single-copy-button > button").trigger("click");
+                }
             },
             copy_button_element: null,
+            copy_button_hide_timeout: null,
             copy_button_obj: {
                 obj: null, 
                 on_success: function(e){
@@ -1032,8 +1069,9 @@ var lib = {
                     setTimeout(function () {
                         $(e.trigger).tooltip('hide');
                         $('#single-copy-button').hide();
-                    
                     }, 800);
+                    
+                    clearTimeout(lib.ui.msg.copy_button_hide_timeout);
 
                     $(e.trigger).attr("title", prev_title);
                     e.clearSelection();
@@ -1049,7 +1087,8 @@ var lib = {
                 $('#single-copy-button').show();
                 $('#single-copy-button').css({"left": parseInt(childPos.left) - 30 + "px", "top": parseInt(childPos.top) + "px"});
                 lib.ui.msg.copy_button_element = $(element)[0];          
-                setTimeout(function(){
+                clearTimeout(lib.ui.msg.copy_button_hide_timeout);
+                lib.ui.msg.copy_button_hide_timeout = setTimeout(function(){
                     $('#single-copy-button').hide();
                 }, 5000);
             },
