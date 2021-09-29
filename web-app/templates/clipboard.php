@@ -1,4 +1,5 @@
 <h1>Clipboard</h1>
+<div class="copy-button" id="single-copy-button"><button class="btn btn-success btn-sm" title="select all text and copy" ><i class="fa fa-clipboard"></i> Ctrl+C</button></div>
 <div class="container-fluid block-wrapper">
   <div class="row">
     <div class="col-8 messages-wrapper">
@@ -39,7 +40,6 @@
               <input type="file"  style="display: none;" id="file-selector" multiple onchange="lib.ui.msg.send_file_selected(event, this)">
           </div>
       </div>
-      <div class="copy-button" id="single-copy-button"><button class="btn btn-success btn-sm" title="select all text and copy" ><i class="fa fa-clipboard"></i></button></div>
       <div class="messages">
           
       </div>      
