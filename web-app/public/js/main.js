@@ -997,7 +997,8 @@ var lib = {
             }
         },
         on_window_resize: function(event) {
-            lib.ui.share_key.update_qrcode_size();
+            lib.ui.share_key.update_qrcode_size();            
+            lib.ui.msg.copy_button_hide();
         },
         msg: {
             copy_button_init: function(){
@@ -1082,11 +1083,37 @@ var lib = {
                     lib.modal.alert("Copy error", "Error on copying: " + lib.tools.toJson(event));
                 }
             },
+            copy_button_hide: function(){
+                clearTimeout(lib.ui.msg.copy_button_hide_timeout);
+                $('#single-copy-button').hide();
+            },
             copy_button_show: function(element, event){
                 var childPos = $(element).offset();
+                console.log(childPos);
                 $('#single-copy-button').show();
-                $('#single-copy-button').css({"left": parseInt(childPos.left) - 30 + "px", "top": parseInt(childPos.top) + "px"});
+                $('#single-copy-button').css(
+                    {
+                        "left": parseInt(childPos.left + $(element).width()) - 30 + "px", 
+                        "top": parseInt(childPos.top) + 2 + "px"
+                    }
+                );
+                var rect = $(element)[0].getBoundingClientRect();
+                console.log(rect)
+                if (rect.top < $('nav.navbar').height() + $('#single-copy-button').height() * 2/3)
+                {
+                    $('#single-copy-button').css('top', 
+                        parseInt($('#single-copy-button').css('top')) 
+                        + 
+                        parseInt(-rect.top)
+                        +
+                        parseInt($('#single-copy-button').height() * 2/3)
+                        + 
+                        parseInt($('nav.navbar').height())
+                        + "px");
+                }
+                
                 lib.ui.msg.copy_button_element = $(element)[0];          
+                
                 clearTimeout(lib.ui.msg.copy_button_hide_timeout);
                 lib.ui.msg.copy_button_hide_timeout = setTimeout(function(){
                     $('#single-copy-button').hide();
