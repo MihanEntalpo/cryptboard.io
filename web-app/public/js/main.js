@@ -1060,7 +1060,7 @@ var lib = {
                 on_success: function(e){
                     console.log(e.trigger);
                     var prev_title = $(e.trigger).attr('title');
-                    $(e.trigger).attr("title", "Copied to clipboard");
+                    $(e.trigger).attr("title", "All text copied to clipboard");
                     $(e.trigger).tooltip({
                         container: 'body',
                         html: true,
@@ -1093,8 +1093,8 @@ var lib = {
                 $('#single-copy-button').show();
                 $('#single-copy-button').css(
                     {
-                        "left": parseInt(childPos.left + $(element).width()) - 30 + "px", 
-                        "top": parseInt(childPos.top) + 2 + "px"
+                        "left": parseInt(childPos.left + $(element).width()) - 20 + "px", 
+                        "top": parseInt(childPos.top) + 0 + "px"
                     }
                 );
                 var rect = $(element)[0].getBoundingClientRect();
