@@ -1939,24 +1939,19 @@ var lib = {
 
                 var url = window.location.origin 
                             + "/#" + params_str;
-                    
-                var qrcode = new QRCode(document.getElementById("qrcode"), {
-                    text: url,
-                    colorDark:    "#000000",
-                    colorLight:   "#ffffff",
-                    colorBorder: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H,
-                    // WARNING: when printing a QRcode on a DARK background, you MUST
-                    // add a "quiet zone" around the QRcode for it to be properly
-                    // recognized by all applications.
-                    // Use a margin of 2 or more to accomplish this.
-                    margin:       0,
-                    overlayOptions: {
-                            blockRatio: 0.4,
-                    },
-                    useSVG : 'false'
+                
+                var qrcode = new VanillaQR({
+                    url: url,
+                    size: 500,
+                    colorLight: "#ffffff",
+                    colorDark: "#000000",
+                    toTable: false,
+                    eccLevel: 2,
+                    borderSize: 1
                 });
                 
+                $('#qrcode').append(qrcode.domElement);
+
                 $('#my-avatar').html(lib.avatar.create_svg_by_user(lib.client.uid, lib.crypto.keys.public));
                 
                 $('#share-link').attr("href", url);

@@ -15,6 +15,7 @@
         <script src="/js/libs/jsencrypt.js"></script>
         <script src="/fontawesome-free-5.15.3-web/js/all.js"></script>
         <script src="/js/libs/qrcode.min.js"></script>
+        <script src="/js/libs/VanillaQR.min.js"></script>
         <script src="/js/libs/pako.min.js"></script>
         <script src="/js/libs/jquery.ba-bbq.min.js"></script>
         <script src="/js/libs/localforage.js"></script>

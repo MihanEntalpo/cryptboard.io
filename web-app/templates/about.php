@@ -46,7 +46,7 @@
         + <a href='https://fontawesome.com' target='_blank'>Fontawesome</a>
         + <a href='https://arcticlab.ru/arcticmodal/' target='_blank'>ArcticModal</a>
         + <a href='http://benalman.com/projects/jquery-bbq-plugin/' target='_blank'>jQueryBBQ</a>
-        + <a href='https://github.com/davidshimjs/qrcodejs' target='_blank'>QRCode generator</a>
+        + <a href='https://github.com/chuckfairy/VanillaQR.js' target='_blank'>VanillaJs QRCode generator</a>
         + <a href='https://github.com/zenorocha/clipboard.js' target="_blank">Clipboard.js</a>
     </li>
     <li>RSA encryption implemented by: <a href='https://github.com/travist/jsencrypt' target='_blank'>JSEncrypt library</a></li>
