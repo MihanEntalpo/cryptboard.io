@@ -607,3 +607,15 @@ table.files-select-table tr.file-row
 {
     border: 1px solid black;
 }
+
+#send_file_button.highlight
+{
+    border: 3px solid red;
+    margin: -3px;
+}
+
+.grey-info
+{
+    color:grey;
+    font-size: small;
+}

@@ -237,7 +237,9 @@ var lib = {
             $('#text_to_send').keydown(lib.ui.msg.send_ctrl_enter);
             $('#text_to_send').on("change keyup paste cut copy", lib.ui.msg.message_change);
             
-            lib.clipboard.init();
+            lib.clipboard.init();    
+            
+            lib.ui.msg.send_file_drop_init();
         },
         /**
          * Check for versions change
@@ -1196,6 +1198,41 @@ var lib = {
                 
                 if (files.length === 0) return;
                 
+                lib.ui.msg.open_files_dialog(files);
+                
+            },
+            send_file_drop_init: function(){
+                
+                $("#send_file_button").bind("dragover", function(e) {
+
+                    if ($("#send_file_button").hasClass("highlight"))
+                        return; 
+
+                    $("#send_file_button").addClass("highlight");
+
+                });
+
+                $("#send_file_button").bind("dragleave", function(e) {
+                    if (!$("#send_file_button").hasClass("highlight"))
+                         return; 
+                    $("#send_file_button").removeClass("highlight");
+                });
+            },
+            send_file_drop: function(event){
+                var files = [];
+                event.stopPropagation();
+                event.preventDefault();
+                
+                $("#send_file_button").removeClass("highlight");
+
+                if (event.type === 'drop') {
+                    files = Array.from(event.dataTransfer.files);
+                }
+                if (files.length === 0) return;
+                
+                lib.ui.msg.open_files_dialog(files);
+            },
+            open_files_dialog: function(files){
                 var file_lines = [];
                 
                 files.forEach(function(file){
@@ -1260,7 +1297,6 @@ var lib = {
                 $(modal).find('textarea.file-comment').focus(function () {
                     $(this).animate({ height: "4em" }, 500);
                 });
-                
             },
             types: {
                 "unknown": {
@@ -2583,8 +2619,7 @@ var lib = {
                 }, 1000
             );
         },
-        reconstruct_file_from_parts: function(file_msg_id)
-        {
+        reconstruct_file_from_parts: function(file_msg_id) {
             return lib.storage.get("msg:" + file_msg_id).then(function(file_msg_obj){
                 if (lib.files.debug)console.log("RECONSTRUCTION FILE");
                 if (lib.files.debug)console.log(file_msg_obj);

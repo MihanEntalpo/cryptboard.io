@@ -23,9 +23,12 @@
                 <textarea name='text' id='text_to_send'></textarea>
           </div>
           <div class="horizontal-buttons">
+              <span class='grey-info'>Drag&drop file to the button&rarr;</span>
               <button type=button class='btn btn-sm btn-light' id='send_file_button' 
                       title='Send file' 
                       onclick='lib.ui.msg.send_file_btn_click()'
+                      ondragover="lib.ui.msg.send_file_drop(event)"
+                      ondrop="lib.ui.msg.send_file_drop(event)"
                       >
                       Send file
                       <i class='fa fa-paperclip idle'></i></button>
