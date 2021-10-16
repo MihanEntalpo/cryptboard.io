@@ -1947,10 +1947,10 @@ var lib = {
                     colorDark: "#000000",
                     toTable: false,
                     eccLevel: 2,
-                    borderSize: 1
+                    borderSize: 0
                 });
                 
-                $('#qrcode').append(qrcode.domElement);
+                $('#qrcode').append(qrcode.toImage("png"));
 
                 $('#my-avatar').html(lib.avatar.create_svg_by_user(lib.client.uid, lib.crypto.keys.public));
                 
