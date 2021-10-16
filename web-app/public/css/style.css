@@ -36,6 +36,8 @@ main
 #qrcode
 {
     padding: 0px;
+    padding-left:12px;
+    padding-top:12px;
     border:1px solid grey;
     display:inline-block;
     max-width: 100vw;
