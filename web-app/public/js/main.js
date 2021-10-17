@@ -1454,9 +1454,10 @@ var lib = {
                 "add": {
                     "icon": "fa-key",
                     "title": "Add contact message",
-                    "parse_payload": helpers.make_promise(
-                        function(msg, payload) {
-                            
+                    "parse_payload": function(msg, payload) {
+
+                        return new Promise(function(resolve, reject){
+
                             msg['data'] = {
                                 "uid": payload['uid'],
                                 "public_key": payload['public_key'],
@@ -1467,21 +1468,45 @@ var lib = {
 
                             if (uid_valid && public_key_valid)
                             {
-                                lib.receivers.add_receiver(payload['uid'], payload['public_key']);                            
+                                lib.receivers.get_receiver(payload['uid'], false).then(function(receiver){
+                                    if (receiver && receiver.public_key === payload['public_key'])
+                                    {
+                                        msg['hidden'] = true;
+                                        resolve(msg);
+                                    }
+                                    else
+                                    {
+                                        lib.receivers.add_receiver(payload['uid'], payload['public_key']).then(function(){
+                                            resolve(msg);
+                                        });
+                                    }
+                                });
                             }
                             else
                             {
                                 msg['state'] = 'broken';
+                                resolve(msg);
                             }
-                            
-                            return msg;
-                        }
-                    ),
-                    "renderer": helpers.make_promise(function(msg){
-                        return `<div class='key-msg-content'>
-                                    <b>Public key</b> from receiver <b>${msg.data.uid}</b>
-                                </div>`
-                    })
+                        });
+                    },
+                    "renderer":function(msg){
+                        return new Promise(function(resolve, reject){
+                            lib.receivers.get_receiver(msg.data.uid, false).then(function(receiver){
+                                if (receiver)
+                                {
+                                    var avatar = `<div class='small-avatar-wrapper'>${receiver.data.icon}</div>`;
+                                }
+                                else
+                                {
+                                    var avatar = "";
+                                }
+                                var code = `<div class='key-msg-content'>
+                                        <b>Public key</b> from receiver ${avatar}<b>${msg.data.uid}</b>
+                                    </div>`;
+                                resolve(code);
+                            })
+                        })
+                    }
                 },
                 "image": {
                     "icon": "fa-image",
@@ -2008,8 +2033,8 @@ var lib = {
                 var progress = lib.ui.msg.progress[progress_state]
 
                 var hidden = (type.hasOwnProperty('hidden') && type.hidden) || false;
-
-                if (hidden)
+                
+                if (hidden || msg['hidden'])
                 {
                     return Promise.resolve("");
                 }
@@ -2046,9 +2071,9 @@ var lib = {
 
                     var from = msg['from'];
 
-                    var avatar_content = $('#' + from).find('svg').parent().html() || lib.avatar.empty_avatar;
+                    var avatar_content = $('#' + from).find('.avatar').parent().html() || lib.avatar.empty_avatar;
 
-                    var avatar_circle = `<div class="avatar-circle">${avatar_content}</div>`;
+                    var avatar_circle = `<div class="avatar-circle small-avatar-wrapper">${avatar_content}</div>`;
 
                     var content = `
                         <div class='message ${msg_content ? "contented" : "contentless"} ${incoming ? "incoming" : "outgoing"}' id="${msg.id}" style='${existing ? '' : 'display:none;'}'>
