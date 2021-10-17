@@ -619,3 +619,20 @@ table.files-select-table tr.file-row
     color:grey;
     font-size: small;
 }
+
+.small-avatar-wrapper
+{
+    display: inline-block;
+}
+
+.small-avatar-wrapper .avatar
+{
+    width: 24px;
+    height: 24px;
+}
+
+.small-avatar-wrapper .avatar svg
+{
+    width: 24px;
+    height: 24px;
+}
