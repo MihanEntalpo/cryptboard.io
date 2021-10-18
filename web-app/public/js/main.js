@@ -3041,7 +3041,7 @@ var lib = {
                 }, helpers.reject_handler);
             };
             
-            return lib.ajax.call("POST", "/clear").then(destroy_local).catch(destroy_local);
+            return lib.ajax.call("POST", "/api/clear").then(destroy_local).catch(destroy_local);
         },
         set_uid: function(uid)
         {
@@ -3198,7 +3198,7 @@ var lib = {
             }
         },
         auth: function(){
-            return lib.ajax.call("POST", "/auth").then(function(res){
+            return lib.ajax.call("POST", "/api/auth").then(function(res){
                 var access_token = res['access_token'];
                 var refresh_token = res['refresh_token'];
                 
@@ -3221,7 +3221,7 @@ var lib = {
             });
         },
         check: function(){
-            return lib.ajax.call("POST", "/check").then(function(res){
+            return lib.ajax.call("POST", "/api/check").then(function(res){
                 if (res['check'] === "ok")
                 {
                     lib.crypto.prolong_expire();
@@ -3239,7 +3239,7 @@ var lib = {
             })
         },
         refresh: function(){
-            return lib.ajax.call("POST", "/refresh", {
+            return lib.ajax.call("POST", "/api/refresh", {
                 "refresh_token": lib.storage.get("refresh_token")
             }).then(function(res){
                 var access_token_payload = lib.convert.parseJwt(res['access_token']);
@@ -3542,13 +3542,13 @@ var lib = {
         has_unread: false,
         processings: {},
         list: function(){
-            return lib.ajax.call("POST", "/receive-list", {}).then(function(res){
+            return lib.ajax.call("POST", "/api/receive-list", {}).then(function(res){
                 lib.msg.has_unread = res.length > 0;
                 return res;
             }, helpers.reject_handler);
         },
         get: function(msg_ids){
-            return lib.ajax.call("POST", "/receive", {"msg_ids": msg_ids}).then(function(res){
+            return lib.ajax.call("POST", "/api/receive", {"msg_ids": msg_ids}).then(function(res){
                 return res;
             }, helpers.reject_handler);
         },
@@ -3605,7 +3605,7 @@ var lib = {
                     }
                 });
 
-                return lib.ajax.call("POST", "/send-multi", data).then(function(res){
+                return lib.ajax.call("POST", "/api/send-multi", data).then(function(res){
                     var post_process_promises = [];
                     
                     res.forEach(function(res_item){
@@ -3720,7 +3720,7 @@ var lib = {
                         var first_10_msg_ids = msg_ids_not_read.slice(0, 10);
                         if (lib.msg.debug) console.log("Loading first " + first_10_msg_ids.length + " messages...");
                         
-                        return lib.ajax.call("POST", "/receive", {"msg_ids": first_10_msg_ids}).then(function(results){
+                        return lib.ajax.call("POST", "/api/receive", {"msg_ids": first_10_msg_ids}).then(function(results){
                             if (lib.msg.debug) console.log("Messages loaded:");
                             if (lib.msg.debug) console.log(results); 
                     
@@ -3752,7 +3752,7 @@ var lib = {
             }, function(err) { lib.msg.checking_new_in_progress = false; helpers.reject_handler(err);});
         },
         mark_read: function(msg_ids) {
-            return lib.ajax.call("POST", "/read", {"msg_ids": msg_ids});
+            return lib.ajax.call("POST", "/api/read", {"msg_ids": msg_ids});
         },
         check_new_and_draw: function(){
             return lib.msg.check_new().then(

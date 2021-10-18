@@ -27,7 +27,7 @@ Router::add(["pattern" => "#^(/|index\.php\??)$#", "type"=>"regexp"], function()
    echo render("_tabs_content", ["page"=>"tabs"], "default");
 });
 
-Router::add("/uid", function(){
+Router::add("/api/uid", function(){
     if (!isset($_SESSION['uid']))
     {
         $_SESSION['uid'] = Uuid::uuid4()->toString();
@@ -35,7 +35,7 @@ Router::add("/uid", function(){
     echo_json(["uid" => $_SESSION['uid']]);
 }, ["POST"]);
 
-Router::add("/jwt-pub-key", function(){
+Router::add("/api/jwt-pub-key", function(){
     echo_json(["jwt_public_key"=>get_conf("JWT_PUBLIC_KEY")]);
 });
 
@@ -47,18 +47,18 @@ Router::add("/index.php?XDEBUG_SESSION_START=netbeans-xdebug", function(){
    echo "XDEBUG_PROFILE!"; 
 });
 
-Router::add("/test-redis", function(){
+Router::add("/api/test-redis", function(){
     echo "get x:" . Storage::get("x") . "<br>";
     echo "set x to " . time() ."<br>";
     Storage::set("x", time());
     echo "get x again: " . Storage::get("x") . "<br>";
 });
 
-Router::add("/icons", function(){
+Router::add("/api/icons", function(){
     echo render("icons", [], "default");
 });
 
-Router::add("/refresh", function(){
+Router::add("/api/refresh", function(){
     $token = post('refresh_token') ?? null;
     
     $uid = JWTH::check($token, "refresh", $data);
@@ -75,7 +75,7 @@ Router::add("/refresh", function(){
    
 }, ["post"]);
 
-Router::add("/check", function(){
+Router::add("/api/check", function(){
     $uid = JWTH::auth_bearer($data);
     
     return [
@@ -84,11 +84,11 @@ Router::add("/check", function(){
     ];
 });
 
-Router::add("/fake-clipboard", function(){
+Router::add("/api/fake-clipboard", function(){
     echo render("fake-clipboard", [], "default");
 });
 
-Router::add("/auth", function(){
+Router::add("/api/auth", function(){
     $uid = UUID::uuid4()->toString();
     $sessid = UUID::uuid4()->toString();
     
@@ -101,7 +101,7 @@ Router::add("/auth", function(){
     ];
 });
 
-Router::add("/clear", function(){
+Router::add("/api/clear", function(){
     $uid = JWTH::auth_bearer($data);
     
     clear_uid($uid);
@@ -111,7 +111,7 @@ Router::add("/clear", function(){
     ];
 });
 
-Router::add("/send", function(){
+Router::add("/api/send", function(){
     $uid = JWTH::auth_bearer($data);
     Router::throttle($uid, "send", 50);
     
@@ -131,7 +131,7 @@ Router::add("/send", function(){
     add_message($uid, $receiver, $payload);
 });
 
-Router::add("/send-multi", function(){
+Router::add("/api/send-multi", function(){
     $uid = JWTH::auth_bearer($data);
     Router::throttle($uid, "send-multi", 50);
     
@@ -167,7 +167,7 @@ Router::add("/send-multi", function(){
     
 });
 
-Router::add("/receive-list", function(){
+Router::add("/api/receive-list", function(){
    
     $uid = JWTH::auth_bearer($data);
     
@@ -175,7 +175,7 @@ Router::add("/receive-list", function(){
     
 });
 
-Router::add("/receive", function($route){
+Router::add("/api/receive", function($route){
    
     $msg_ids = post("msg_ids");
     
@@ -192,7 +192,7 @@ Router::add("/receive", function($route){
     
 });
 
-Router::add("/read", function($route){
+Router::add("/api/read", function($route){
    
     $uid = JWTH::auth_bearer($data);
     
