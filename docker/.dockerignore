@@ -1,0 +1,7 @@
+vendor/**/*
+*/vendor/**/*
+**/vendor/**/*
+**/vendor
+vendor
+web-app/.env
+

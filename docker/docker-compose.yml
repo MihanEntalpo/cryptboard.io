@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  cryptboard-webapp:
+    build:
+      context: ../
+      dockerfile: ./Dockerfile
+    image: cryptboard-webapp:tag
+
+  
+  
