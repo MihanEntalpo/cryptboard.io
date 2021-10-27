@@ -3,5 +3,5 @@ SCRIPT=`realpath $0`
 SCRIPTPATH=`dirname $SCRIPT`
 
 cd "$SCRIPTPATH"
-docker build  -f ./docker/Dockerfile-webapp . --tag cryptboard-webapp
-
+ 
+docker-compose -f ./docker/docker-compose.yml --env-file ./web-app/.env "$@"
