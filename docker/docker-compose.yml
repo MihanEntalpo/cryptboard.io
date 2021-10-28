@@ -5,4 +5,12 @@ services:
       context: ../   
       dockerfile: ./docker/Dockerfile-webapp
     image: cryptboard-webapp:tag
+   
+  redis:
+    image: redis
+    ports:
+      - "26379:26379"
+    volumes:
+      - ../redis-data:/data
+    entrypoint: redis-server --appendonly yes
     
