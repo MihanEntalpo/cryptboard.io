@@ -5,12 +5,29 @@ services:
       context: ../   
       dockerfile: ./docker/Dockerfile-webapp
     image: cryptboard-webapp:tag
+    links:
+      - redis
+    volumes:
+      - app:/web-app
    
   redis:
     image: redis
-    ports:
-      - "26379:26379"
     volumes:
       - ../redis-data:/data
     entrypoint: redis-server --appendonly yes
     
+  nginx:
+    # используем последний стабильный образ nginx
+    image: nginx:latest
+    # маршрутизируем порты
+    ports:
+      - "8881:80"      
+    # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
+    volumes:
+      - app:/web-app      
+    # nginx должен общаться с php контейнером
+    links:
+      - cryptboard-webapp
+      
+volumes:
+  app:
