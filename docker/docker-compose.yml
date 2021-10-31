@@ -9,13 +9,15 @@ services:
       - redis
     volumes:
       - app:/web-app
-   
+    env_file:
+      - ../web-app/.env.docker
+
   redis:
     image: redis
     volumes:
       - ../redis-data:/data
     entrypoint: redis-server --appendonly yes
-    
+
   nginx:
     # используем последний стабильный образ nginx
     image: nginx:latest
@@ -24,10 +26,11 @@ services:
       - "8881:80"      
     # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
     volumes:
-      - app:/web-app      
+      - app:/web-app
+      - ../conf/nginx/docker-nginx-conf.d:/etc/nginx/conf.d
     # nginx должен общаться с php контейнером
     links:
       - cryptboard-webapp
-      
+
 volumes:
   app:

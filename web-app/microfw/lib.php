@@ -127,6 +127,7 @@ function get_conf($variable, $default=null)
     if (is_null($file_env_vars))
     {
         $file_env_vars = [];
+        
         if (file_exists(__DIR__ . "/../.env"))
         {
             $lines = explode("\n", file_get_contents(__DIR__ . "/../.env"));
@@ -144,8 +145,11 @@ function get_conf($variable, $default=null)
                     }
                 }
             }
-        }
+        }        
     }
+    
+    print_r($file_env_vars);
+    
     
     $res = $default;
     
