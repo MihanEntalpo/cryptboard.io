@@ -103,6 +103,8 @@ function get_conf($variable, $default=null)
 {
     static $file_env_vars;
     
+    $env_file = realpath(__DIR__ . "/../.env");
+    
     $parse_val = function($val) {
         $val = trim($val);
         if (strtolower($val)=="false")
@@ -148,17 +150,13 @@ function get_conf($variable, $default=null)
         }        
     }
     
-    print_r($file_env_vars);
-    
-    
     $res = $default;
     
     if (getenv($variable) !== false)
     {
         $res = $parse_val(getenv($variable));        
     }
-    
-    if (isset($file_env_vars[$variable]))
+    else if (isset($file_env_vars[$variable]))
     {
         $res = $file_env_vars[$variable];
     }
