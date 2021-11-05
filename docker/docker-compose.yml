@@ -24,7 +24,7 @@ services:
     image: cryptboard-nginx:latest
     # маршрутизируем порты
     ports:
-      - "8881:80"      
+      - "${SERVER_PORT}:80"      
     # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
     volumes:
       - ../conf/nginx/docker-nginx-conf.d:/etc/nginx/conf.d
