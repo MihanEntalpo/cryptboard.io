@@ -204,4 +204,15 @@ On official app this variable is set to cryptboard.io
 
 SERVER_PORT should be a port, that is opened from docker container with running app
 
-7. 
+7. Configure Nginx
+
+Use file conf/nginx/dockerless.conf as a template for your configuration.
+
+You should change:
+
+server_name, SSL certificate and key, root folder and PHP fastcgi_pass url
+
+8. Open site in browser and check if it's running.
+
+If it's not, look for logs of nginx and php and check what should be changed.
+
