@@ -66,7 +66,7 @@ git clone git@github.com:MihanEntalpo/cryptboard.io.git
 
 Installation of docker described at https://docs.docker.com/get-docker/
 
-Installation of docker-compose is at https://docs.docker.com/compose/install/
+Installation of docker-compose described at https://docs.docker.com/compose/install/
 
 3. Create config file
 
@@ -131,17 +131,77 @@ This is just a simplification to use docker-compose without specifying docker-co
 
 Open url http://127.0.0.1:{SERVER_PORT}/ in browser (You you are deploying app not locally, but on some online server, replace 127.0.0.1 by it's real IP)
 
-10. Configure nginx to proxyfy traffic to this local server and if needed to use SSL
+10. Configure nginx to be a reverse-proxy to this local server and make it use SSL if needed (SSL keys could be obtained from LetsEncrypt)
 
-...
+Use conf/nginx/docker-proxypass.conf as a template for your docker config.
 
-
+You will need to set the right hostname, proxy_pass port, logfiles location and letsencrypt key and cert files.
 
 ### Old good dockerless installation
+
+Recommended for development
 
 **Prerequisites:**
 
 * Nginx
 * Redis-server
-* 
+* Php-fpm (version 7.0 and higher)
+* Php-redis extension
 
+**Installation:**
+
+Instructions are made for deb-based distro:
+
+1. Install needed packages
+
+```bash
+sudo apt-get install nginx-full php-fpm php-redis git
+```
+
+2. Clone repo
+
+```bash
+git clone git@github.com:MihanEntalpo/cryptboard.io.git
+```
+
+3. Create config file
+
+```bash
+cp web-app/.env.example web-app/.env
+```
+
+4. Generate public and private keys for usage with JWT:
+
+Run command:
+
+```bash
+ssh-keygen -t rsa -b 2048 -f jwtRS256.key -N ""
+```
+
+Files jwtRS256.key and jwtRS256.key.pub would be created.
+
+5. Put contents of the files to .env.docker
+
+Content of the files should be put in one-liners with "\n" string joining splitted lines, and put it to JWT_PUBLIC_KEY and JWT_PRIVATE_KEY variables.
+
+To make it simple just run the following bash command:
+
+Fill JWT_PRIVATE_KEY in .env.docker:
+```bash
+LINE=$(cat ./web-app/jwtRS256.key | tr '\n' '$' | sed 's|\$|\\\\n|g;s|^|JWT_PRIVATE_KEY=|g'); sed -i "s|^JWT_PRIVATE_KEY.*|$LINE|g" -i ./web-app/.env
+```
+
+Fill JWT_PUBLIC_KEY in .env.docker:
+```bash
+LINE=$(cat ./web-app/jwtRS256.key.pub | tr '\n' '$' | sed 's|\$|\\\\n|g;s|^|JWT_PUBLIC_KEY=|g'); sed -i "s|^JWT_PUBLIC_KEY.*|$LINE|g" -i ./web-app/.env
+```
+
+6. Fill some other variables
+
+SERVER_HOST should be set to your HTTP host configured in Nginx or any other reverse-proxy server.
+
+On official app this variable is set to cryptboard.io
+
+SERVER_PORT should be a port, that is opened from docker container with running app
+
+7. 
