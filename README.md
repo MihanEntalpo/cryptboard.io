@@ -44,6 +44,12 @@ Website: https://cryptboard.io/
 
 Details on secure usage could be found at https://cryptboard.io/#tab=security
 
+## Technologies
+
+* Application backend is based on php-fpm, with super-simple hand-crafted micro-framework
+* Database used by backend server is Redis
+* Frontend is written on html + css + vanillaJs + jQuery + Bootstrap
+
 ## Deploying your own installation
 
 ### Docker installation
