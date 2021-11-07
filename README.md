@@ -50,6 +50,8 @@ Details on secure usage could be found at https://cryptboard.io/#tab=security
 * Database used by backend server is Redis
 * Frontend is written on html + css + vanillaJs + jQuery + Bootstrap
 
+Detail on used technologies can be seen here: https://cryptboard.io/#tab=about
+
 ## Deploying your own installation
 
 ### Docker installation
