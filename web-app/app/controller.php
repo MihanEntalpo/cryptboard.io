@@ -12,7 +12,6 @@ if (extension_loaded('newrelic')) {
 
 }
 
-
 Storage::init();
 
 Router::addMiddleware(function(){
