@@ -12,7 +12,6 @@ if (extension_loaded('newrelic')) {
 
 }
 
-
 Storage::init();
 
 Router::addMiddleware(function(){
@@ -23,8 +22,16 @@ Router::addMiddleware(function(){
     }
 });
 
+Router::add(["pattern" => "#^/(?P<page>about|security|clipboard|share-key|add-key)(^|[^a-zA-Z0-9_-])?#", "type"=>"regexp"], function($route){
+   echo render("_tabs_content", ["page"=>$route['matches']['page']], "default"); 
+});
+
 Router::add(["pattern" => "#^(/|index\.php\??)$#", "type"=>"regexp"], function(){
    echo render("_tabs_content", ["page"=>"tabs"], "default");
+});
+
+Router::add(["pattern"=> "#^/clipboard/?$#", "type"=>"regexp"], function(){
+   echo render("clipboard", ["page"=>"clipboard"], "default"); 
 });
 
 Router::add("/api/uid", function(){
@@ -37,21 +44,6 @@ Router::add("/api/uid", function(){
 
 Router::add("/api/jwt-pub-key", function(){
     echo_json(["jwt_public_key"=>get_conf("JWT_PUBLIC_KEY")]);
-});
-
-Router::add(["pattern"=> "#^/clipboard/?$#", "type"=>"regexp"], function(){
-   echo render("clipboard", ["page"=>"clipboard"], "default"); 
-});
-
-Router::add("/index.php?XDEBUG_SESSION_START=netbeans-xdebug", function(){
-   echo "XDEBUG_PROFILE!"; 
-});
-
-Router::add("/api/test-redis", function(){
-    echo "get x:" . Storage::get("x") . "<br>";
-    echo "set x to " . time() ."<br>";
-    Storage::set("x", time());
-    echo "get x again: " . Storage::get("x") . "<br>";
 });
 
 Router::add("/api/icons", function(){
@@ -82,10 +74,6 @@ Router::add("/api/check", function(){
         "check"=>"ok",
         "uid"=>$uid
     ];
-});
-
-Router::add("/api/fake-clipboard", function(){
-    echo render("fake-clipboard", [], "default");
 });
 
 Router::add("/api/auth", function(){

@@ -53,10 +53,10 @@
       </div>
       <div class='row'>
           <div class='col'>
-            <a href='#tab=share-key' class='btn btn-success full-width'>Share my key</a>
+            <a href='/share-key' class='btn btn-success full-width'>Share my key</a>
           </div>
           <div class='col'>
-            <a href='#tab=add-key' class='btn btn-primary full-width'>Add key</a>
+            <a href='/add-key' class='btn btn-primary full-width'>Add key</a>
           </div>
       </div>
     </div>

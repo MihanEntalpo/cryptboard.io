@@ -1,15 +1,13 @@
-<div class='tab' data-tab='about'>
-    <?=render("about", "")?>
+<?php
+$pages = [
+    "about", "share-key", "clipboard", "add-key", "security"
+];
+
+
+foreach ($pages as $cur_page):
+?>
+<div class='tab <?=($cur_page == $page) ? "active" : ""?>' data-tab='<?=$cur_page?>'>
+    <?=render($cur_page, "")?>
 </div> 
-<div class="tab active" data-tab="share-key">
-    <?=render("share-key", "")?>
-</div>
-<div class="tab" data-tab="clipboard">
-    <?=render("clipboard", "")?>
-</div>
-<div class='tab' data-tab="add-key">
-    <?=render("add-key", "")?>
-</div>
-<div class='tab' data-tab="security">
-    <?=render("security", "")?>
-</div>
+<? 
+endforeach;
