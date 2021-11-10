@@ -103,6 +103,8 @@ function get_conf($variable, $default=null)
 {
     static $file_env_vars;
     
+    $env_file = realpath(__DIR__ . "/../.env");
+    
     $parse_val = function($val) {
         $val = trim($val);
         if (strtolower($val)=="false")
@@ -127,6 +129,7 @@ function get_conf($variable, $default=null)
     if (is_null($file_env_vars))
     {
         $file_env_vars = [];
+        
         if (file_exists(__DIR__ . "/../.env"))
         {
             $lines = explode("\n", file_get_contents(__DIR__ . "/../.env"));
@@ -144,7 +147,7 @@ function get_conf($variable, $default=null)
                     }
                 }
             }
-        }
+        }        
     }
     
     $res = $default;
@@ -153,8 +156,7 @@ function get_conf($variable, $default=null)
     {
         $res = $parse_val(getenv($variable));        
     }
-    
-    if (isset($file_env_vars[$variable]))
+    else if (isset($file_env_vars[$variable]))
     {
         $res = $file_env_vars[$variable];
     }

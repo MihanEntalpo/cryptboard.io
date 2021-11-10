@@ -172,8 +172,6 @@ var lib = {
                 
                 lib.ui.draw.share_key();
                 
-                lib.tabs.on_hash_change();
-                
                 lib.msg.auto_checker_msg.start()
                 
                 lib.ui.draw.receivers(); 
@@ -203,29 +201,20 @@ var lib = {
             
             $("a").click(function(){
                 var href = $(this).attr( "href" );
-                if (href.indexOf("#") !== 0)
+                
+                if (href.indexOf("/") !== 0)
                 {
                     return;
                 }
-                var parts = href.split("#", 2);
-                if (parts.length === 1)
-                {
-                    parts.push("");                    
-                }
-                var params = $.deparam(parts[1]);
-
-                // Push this URL "state" onto the history hash.
-                $.bbq.pushState(params);
-
+                
+                window.history.pushState(
+                    {}, href, window.location.origin + href
+                );
+        
                 $('.navbar-collapse.show').removeClass('show');
 
-                // Prevent the default click behavior.
-                return false;
-            });
-            
-            $(window).bind( "hashchange", function(e) {
-                var url = $.bbq.getState( "url" );
-                lib.tabs.on_hash_change(url);
+                // do_route will return false, if it detected the right url
+                return lib.tabs.do_route(href);
             });
             
             window.addEventListener('resize', function(event) {
@@ -239,7 +228,7 @@ var lib = {
             
             lib.clipboard.init();    
             
-            lib.ui.msg.send_file_drop_init();
+            lib.ui.msg.send_file_drop_init();            
         },
         /**
          * Check for versions change
@@ -1974,7 +1963,9 @@ var lib = {
                         $('#add_name').val("");
                         $('#top-add-key-block .avatar').remove();
                         lib.modal.alert('Key added', "Key successfully added", function(){
-                            window.location.hash = "tab=clipboard";
+                            
+                            $('a[data-tab=clipboard]').trigger("click");                            
+                            
                         });
                         if (need_to_send_my_key)
                         {
@@ -1993,13 +1984,12 @@ var lib = {
         draw: {
             share_key: function(){
                 var params_str = $.param({
-                    "tab": "add-key",
                     "uid": lib.client.uid,
                     "key": lib.crypto.get_public_key_for_share()
                 });
 
                 var url = window.location.origin 
-                            + "/#" + params_str;
+                            + "/add-key?" + params_str;
                 
                 var qrcode = new VanillaQR({
                     url: url,
@@ -2220,8 +2210,7 @@ var lib = {
                     return lib.storage.get("add_send_all_keys", lib.ui.is_mobile()).then(function(add_send_all_keys){
                         $('#add_send_my_key').prop("checked", !!add_key_back);
                         $('#add_send_all_keys').prop("checked", !!add_send_all_keys);
-                        var hash = window.location.hash;
-                        var params = $.deparam(hash);
+                        var params = $.deparam(window.location.search.replace("?", ""));
                         if (params['uid'])
                         {
                             params['uid'] = params['uid'].replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
@@ -2783,6 +2772,28 @@ var lib = {
         }
     },
     tabs: {
+        do_route: function(href){
+            var path = (href.indexOf("?") !== -1) ? href.split("?")[0] : href;
+                
+            if (path in lib.tabs.routes_to_tabs)
+            {
+                var new_tab = lib.tabs.routes_to_tabs[path];
+                if (new_tab === "<default_tab>")
+                {
+                    new_tab = lib.tabs.default_tab;
+                }
+                lib.tabs.change_tab(new_tab);
+                return false;
+            }
+        },
+        routes_to_tabs: {
+            "/": "<default-tab>",
+            "/about": "about",
+            "/share-key": "share-key",
+            "/add-key": "add-key",
+            "/clipboard": "clipboard",
+            "/security": "security"
+        },
         possible_tabs: [
             "about",
             "share-key",
@@ -2791,32 +2802,14 @@ var lib = {
             "security"
         ],
         default_tab: "share-key",
-        get_current_tab: function(url){
-            url = url || window.location.href;
-            var parts = url.split("#", 2);
-            var hash_part = parts[1];
-            if (hash_part)
-            {
-                var params = $.deparam(hash_part);
-                var tab = params['tab'];
-            }
-            else
-            {
-                var tab = lib.tabs.default_tab;
-            }
-            return tab;
-        },
-        on_hash_change: function(url){
-            lib.tabs.change_tab(lib.tabs.get_current_tab(url));
-        },
         get_hash_params: function(){
             var hash = document.location.hash;
             var params = $.deparam(hash);
             return hash;
         },
         init: function(){
-            var tab = lib.tabs.get_hash_params()["tab"];
-            lib.tabs.change_tab(tab);
+            var href = window.location.pathname + window.location.search;
+            lib.tabs.do_route(href);
         },
         change_tab: function(tab)
         {
@@ -3041,7 +3034,7 @@ var lib = {
                 }, helpers.reject_handler);
             };
             
-            return lib.ajax.call("POST", "/clear").then(destroy_local).catch(destroy_local);
+            return lib.ajax.call("POST", "/api/clear").then(destroy_local).catch(destroy_local);
         },
         set_uid: function(uid)
         {
@@ -3198,7 +3191,7 @@ var lib = {
             }
         },
         auth: function(){
-            return lib.ajax.call("POST", "/auth").then(function(res){
+            return lib.ajax.call("POST", "/api/auth").then(function(res){
                 var access_token = res['access_token'];
                 var refresh_token = res['refresh_token'];
                 
@@ -3221,7 +3214,7 @@ var lib = {
             });
         },
         check: function(){
-            return lib.ajax.call("POST", "/check").then(function(res){
+            return lib.ajax.call("POST", "/api/check").then(function(res){
                 if (res['check'] === "ok")
                 {
                     lib.crypto.prolong_expire();
@@ -3239,7 +3232,7 @@ var lib = {
             })
         },
         refresh: function(){
-            return lib.ajax.call("POST", "/refresh", {
+            return lib.ajax.call("POST", "/api/refresh", {
                 "refresh_token": lib.storage.get("refresh_token")
             }).then(function(res){
                 var access_token_payload = lib.convert.parseJwt(res['access_token']);
@@ -3542,13 +3535,13 @@ var lib = {
         has_unread: false,
         processings: {},
         list: function(){
-            return lib.ajax.call("POST", "/receive-list", {}).then(function(res){
+            return lib.ajax.call("POST", "/api/receive-list", {}).then(function(res){
                 lib.msg.has_unread = res.length > 0;
                 return res;
             }, helpers.reject_handler);
         },
         get: function(msg_ids){
-            return lib.ajax.call("POST", "/receive", {"msg_ids": msg_ids}).then(function(res){
+            return lib.ajax.call("POST", "/api/receive", {"msg_ids": msg_ids}).then(function(res){
                 return res;
             }, helpers.reject_handler);
         },
@@ -3605,7 +3598,7 @@ var lib = {
                     }
                 });
 
-                return lib.ajax.call("POST", "/send-multi", data).then(function(res){
+                return lib.ajax.call("POST", "/api/send-multi", data).then(function(res){
                     var post_process_promises = [];
                     
                     res.forEach(function(res_item){
@@ -3720,7 +3713,7 @@ var lib = {
                         var first_10_msg_ids = msg_ids_not_read.slice(0, 10);
                         if (lib.msg.debug) console.log("Loading first " + first_10_msg_ids.length + " messages...");
                         
-                        return lib.ajax.call("POST", "/receive", {"msg_ids": first_10_msg_ids}).then(function(results){
+                        return lib.ajax.call("POST", "/api/receive", {"msg_ids": first_10_msg_ids}).then(function(results){
                             if (lib.msg.debug) console.log("Messages loaded:");
                             if (lib.msg.debug) console.log(results); 
                     
@@ -3752,7 +3745,7 @@ var lib = {
             }, function(err) { lib.msg.checking_new_in_progress = false; helpers.reject_handler(err);});
         },
         mark_read: function(msg_ids) {
-            return lib.ajax.call("POST", "/read", {"msg_ids": msg_ids});
+            return lib.ajax.call("POST", "/api/read", {"msg_ids": msg_ids});
         },
         check_new_and_draw: function(){
             return lib.msg.check_new().then(
