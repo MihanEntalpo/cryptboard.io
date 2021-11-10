@@ -6,8 +6,8 @@ $pages = [
 foreach ($pages as $cur_page)
 {
     ?>
-    <div class='tab <?=($cur_page == $page) ? "active" : ""?>' data-tab='<?=$cur_page?>'>
-        <?=render($cur_page, "")?>
+    <div class='tab <?php echo ($cur_page == $page) ? "active" : ""?>' data-tab='<?php echo $cur_page?>'>
+        <?php echo render($cur_page, "")?>
     </div> 
-    <? 
+    <?php 
 }
