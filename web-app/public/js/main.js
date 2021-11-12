@@ -1136,6 +1136,11 @@ var lib = {
                     lib.msg.delete(msg_ids);
                 });
             },
+            delete_all: function(){
+                lib.modal.confirm("Delete all messages", "Are your sure you want to delete all the messages?", function(){
+                    lib.msg.delete_all();
+                });
+            },
             send_btn_click: function(){
                 var text = $('#text_to_send').val();
                 if (!text) return;
@@ -3563,6 +3568,11 @@ var lib = {
                     });
                     return Promise.all(promises);
                 });
+            });
+        },
+        delete_all: function(){
+            return lib.msg.get_stored_ids().then(function(ids){
+                return lib.msg.delete(ids);
             });
         },
         auto_checker_msg: new helpers.IntervalCaller(function(){

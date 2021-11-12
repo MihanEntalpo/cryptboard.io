@@ -23,6 +23,14 @@
                 <textarea name='text' id='text_to_send'></textarea>
           </div>
           <div class="horizontal-buttons">
+              <button type="button" 
+                      class="btn btn-sm btn-light" 
+                      id="delete_all_msg" 
+                      onclick='lib.ui.msg.delete_all()'
+                      title="Delete all messages" 
+                      style='float:left;'>
+                  <i class='fa fa-trash-alt'></i>
+              </button>
               <span class='grey-info'>Drag&drop file to the button&rarr;</span>
               <button type=button class='btn btn-sm btn-light' id='send_file_button' 
                       title='Send file' 
