@@ -2215,7 +2215,7 @@ var lib = {
                     return lib.storage.get("add_send_all_keys", lib.ui.is_mobile()).then(function(add_send_all_keys){
                         $('#add_send_my_key').prop("checked", !!add_key_back);
                         $('#add_send_all_keys').prop("checked", !!add_send_all_keys);
-                        var params = $.deparam(window.location.search.replace("?", ""));
+                        var params = lib.tools.deparam(window.location.search.replace("?", ""));
                         if (params['uid'])
                         {
                             params['uid'] = params['uid'].replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
@@ -2723,6 +2723,27 @@ var lib = {
         }
     },
     tools: {
+        deparam: function(qs) {
+            var pairs = qs.split('&');
+            var result = {};
+            pairs.forEach(function(p) {
+                var pair = p.split('=');
+                var key = pair[0];
+                var value = decodeURIComponent(pair[1] || '');
+
+                if( result[key] ) {
+                    if( Object.prototype.toString.call( result[key] ) === '[object Array]' ) {
+                        result[key].push( value );
+                    } else {
+                        result[key] = [ result[key], value ];
+                    }
+                } else {
+                    result[key] = value;
+                }
+            });
+
+            return JSON.parse(JSON.stringify(result));
+        },
         promise_wait: function(timeout) {
             var closure = function(res) {
                 return new Promise(function(resolve, reject){
@@ -2809,7 +2830,7 @@ var lib = {
         default_tab: "share-key",
         get_hash_params: function(){
             var hash = document.location.hash;
-            var params = $.deparam(hash);
+            var params = lib.tools.deparam(hash);
             return hash;
         },
         init: function(){
