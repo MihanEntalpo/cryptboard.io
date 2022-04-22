@@ -1,6 +1,6 @@
-# CryptBoard.io - anonymous encrypted web clipboard and char
+# CryptBoard.io - anonymous encrypted web clipboard and chat
 
-Cryptboard.io allows to send text and files between multiple devices 
+Cryptboard.io allows to send text messages and files between multiple devices 
 
 Website: https://cryptboard.io/
 
@@ -8,8 +8,8 @@ Website: https://cryptboard.io/
 
 ## Why would I need it?
 
-* To copy and paste data/files between Host and Virtual machine where clipboard not supported
-* To copy and paste data/files into Remote Desktop, such as VMWare Horizon, RDP, and others where clipboard doesn't work or is disabled
+* To copy and paste text/files between Host and Virtual machine where clipboard not supported
+* To copy and paste text/files into Remote Desktop, such as VMWare Horizon, RDP, and others where clipboard doesn't work or disabled
 * To send valuable data such as passwords or some security keys and tokens without danger of it being intercepted
 * To exchange information in a hostile environment where the server could be evil and yet not giving it a chance to decrypt messages
 * Doing all this stuff without the need for registration
