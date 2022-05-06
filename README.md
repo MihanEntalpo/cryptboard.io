@@ -87,7 +87,9 @@ cp web-app/.env.docker.example web-app/.env.docker
 Run command:
 
 ```bash
-ssh-keygen -t rsa -b 2048 -f jwtRS256.key -N ""
+ssh-keygen -t rsa -b 4096 -m PEM -f jwtRS256.key
+# Don't add passphrase
+openssl rsa -in jwtRS256.key -pubout -outform PEM -out jwtRS256.key.pub
 ```
 
 Files jwtRS256.key and jwtRS256.key.pub would be created.
@@ -183,7 +185,9 @@ cp web-app/.env.example web-app/.env
 Run command:
 
 ```bash
-ssh-keygen -t rsa -b 2048 -f jwtRS256.key -N ""
+ssh-keygen -t rsa -b 4096 -m PEM -f jwtRS256.key
+# Don't add passphrase
+openssl rsa -in jwtRS256.key -pubout -outform PEM -out jwtRS256.key.pub
 ```
 
 Files jwtRS256.key and jwtRS256.key.pub would be created.
