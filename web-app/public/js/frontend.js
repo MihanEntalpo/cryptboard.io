@@ -1,92 +1,3 @@
-var helpers = {
-    /**
-     * Wrapper what make a promise-returning function out of any function
-     * @param {function} func Function to wrap
-     * @returns {function} wrapped function
-     */
-    make_promise: function(func) {
-        var closure = function(){
-            var args = arguments;
-
-            return new Promise(function(resolve, reject){
-                try
-                {
-                    var res = func.apply(this, args);
-                    resolve(res);
-                }
-                catch (e)
-                {
-                    reject(e);
-                }
-            });
-        };
-        return closure;
-    },
-    /**
-     * Defult promise reject handler. Used for debugging.
-     */
-    reject_handler: function(){
-        console.error("Universal reject handler. Arguments:", arguments);
-        console.trace();
-    },
-    /**
-     * IntervalCaller class, calls function between intervals, not allowing to overlap two function calls
-     * @param {function} func Function to run
-     * @param {Integer} interval_ms Milliseconds between calls
-     * @param {String} name Name of IntervalCaller instance
-     * @param {Boolean} debug Is debug enabled?
-     * @returns {IntervalCaller} instance of object
-     */
-    IntervalCaller: function(func, interval_ms, name, debug){
-        
-        if (!func) throw Error("func not set");
-        if (!interval_ms) throw Error("interval_ms not set");
-        if (!name) throw Error("name not set");
-        
-        var obj = this;
-        
-        obj.debug = debug ? true : false;
-        obj.name = name;
-        obj.func = func;
-        obj.interval = null;
-        obj.interval_ms = interval_ms;
-        obj.in_progress = false;
-        obj.go = function(){
-            if (obj.in_progress) {
-                if (obj.debug)
-                {
-                    console.log(obj.name + " handler already running");
-                }
-                return;
-            }
-            obj.in_progress = true;
-            
-            var res = obj.func(obj);
-            
-            Promise.resolve(res).then(function(res){
-                obj.in_progress = false;
-            }, function(err){
-                obj.in_progress = false;
-                helpers.reject_handler(err);
-            });
-        };
-        obj.start = function(){
-            obj.stop();
-            obj.interval = setInterval(obj.go, obj.interval_ms);
-        };
-        obj.stop = function(){
-            if (obj.interval)
-            {
-                clearInterval(obj.interval);
-                obj.inteval = null;
-            }
-        };
-
-        return this;
-    },
-    
-};
-
 /**
  * Main application code goes here
  */
@@ -110,7 +21,8 @@ var lib = {
         init: function(){
             
             lib.broadcast.init();
-            lib.lock.init();
+            lib.core.set_default_broadcast_listeners();
+            lib.sw.init();
             
             var keys_was_generated = false;
             
@@ -129,7 +41,7 @@ var lib = {
                 lib.crypto.get_or_generate_keys(keys_events).then(function(res){
                     lib.ui.popover.set_li_icon("keys", "fa-check-square");
                 }, helpers.reject_handler),
-                lib.lock.get("initial-auth", 10000, 20000, 500, 100).then(function(){
+                Locker.get("initial-auth").lock().then(function(){
                     lib.ui.popover.set_li_icon("get-lock", "fa-check-square");                    
                     
                     return lib.ajax.check_refresh_auth().then(function(res){
@@ -140,9 +52,10 @@ var lib = {
                             window.location.reload();
                         });
                     }).then(function(){
-                        lib.lock.free("initial-auth");
+                        return Locker.get("initial-auth").unlock();
                     })
-                }).catch(function(){
+                }).catch(function(e){
+                    console.error(e);
                     lib.ui.popover.set_li_icon("get-lock", "fa-exclamation-triangle");   
                 })
             ]).then(function(){
@@ -234,6 +147,42 @@ var lib = {
          * Check for versions change
          * @returns {Boolean}
          */
+        set_default_broadcast_listeners: function(){
+            // If we got message "give me private key" - lets send private key back
+            lib.broadcast.add_listener("give_me_private_key", function(data){
+                lib.broadcast.post("take_private_key", {"private_key": lib.crypto.keys.private});                
+            });
+            
+            // If we got message "take private key" - lets remember received private key as our own
+            lib.broadcast.add_listener("take_private_key", function(data){
+                if (data['private_key'])
+                {
+                    lib.crypto.keys['private'] = data['private_key'];
+                }
+            });
+            
+            // If we got message "kill session", let's do it!
+            lib.broadcast.add_listener("kill_session", function(data){
+                lib.client.kill_session();
+            });
+            
+            
+            lib.broadcast.add_listener("uid_changed", function(data){
+                window.location.reload();
+            });
+            
+            lib.broadcast.add_listener("keys_regenerated", function(data){
+                window.location.reload();
+            })
+            
+            lib.broadcast.add_listener("messages_changed", function(data){
+                return lib.ui.draw.messages();
+            });
+            
+            lib.broadcast.add_listener("reload_page", function(data){
+                window.location.reload();
+            });
+        },
         is_version_changed: function(){
             var res = false;
             var saved_version = lib.storage.get_local("lib_version");
@@ -285,522 +234,30 @@ var lib = {
         }
     },
     /**
-     * Library to take cross-tab lock (only single tab can get lock)
+     * Functionality to interact with service worker
      */
-    lock: {
-        debug: false,
-        /**
-         * Initialization
-         * @returns {undefined}
-         */
+    sw: {
         init: function(){
-            lib.broadcast.add_listener("lock_already_taken", lib.lock.on_lock_already_taken_handler);
-            lib.broadcast.add_listener("you_can_take_lock", lib.lock.on_you_can_take_lock_handler);  
-            lib.broadcast.add_listener("can_i_take_lock", lib.lock.on_can_i_take_lock_handler);
-        },
-        acquired_locks: {},
-        acquiring_process: {},
-        /**
-         * Acquire lock
-         * @param {string} lock_name name of lock
-         * @param {int} giveup_timeout How much time to wait for successfule actire (msec), default 2000
-         * @param {int} release_timeout After what time lock should be automatically released, if it didn't happen manually (msec), default 20000
-         * @param {int} await_timeout Interval to receive message "lock_already_taken" to not acquire lock (msec), default 500
-         * @param {int} check_interval Interval to send broadcast message "can_i_take_lock" (msec), default 100
-         * @param {Promise} promise that resolves then lock is taken
-         */
-        get: function(lock_name, giveup_timeout, release_timeout, await_timeout, check_interval){
-            giveup_timeout = giveup_timeout || 2000;
-            release_timeout = release_timeout || 20000;
-            await_timeout = await_timeout || 500;
-            check_interval = check_interval || 100;
-            
-            if (lib.lock.acquiring_process.hasOwnProperty(lock_name))
-            {
-                return lib.lock.acquiring_process[lock_name].promise;
-            }
-            
-            if (lib.lock.acquired_locks.hasOwnProperty(lock_name))
-            {
-                return Promise.resolve(lock_name);
-            }
-            
-            
-            if (lib.lock.debug) console.log("lib.lock.get_lock(", lock_name , giveup_timeout, release_timeout, await_timeout, check_interval, ")");
-            
-            var do_check_lock = function(){
-                var process = lib.lock.acquiring_process[lock_name];
-                if (lib.lock.debug) console.log("lib.lock.get_lock(", lock_name , ") -> do_check_lock");
-                lib.broadcast.post("can_i_take_lock", {
-                    "lock_name": lock_name,
-                    "start_time": process.start_time,
-                    "rock_scissors_paper": process.rock_scissors_paper
+            if ('serviceWorker' in navigator) {
+                return navigator.serviceWorker.register('./js/sw.js', {scope: './js/'})
+                .then((reg) => {
+                  // регистрация сработала
+                  console.log('Registration succeeded. Scope is ' + reg.scope);
+                }).catch((error) => {
+                  // регистрация прошла неудачно
+                  console.log('Registration failed with ' + error);
                 });
-            };
-            
-            var do_giveup_lock = function(){
-                var process = lib.lock.acquiring_process[lock_name];
-                if (lib.lock.debug) console.log("lib.lock.get_lock(", lock_name , ") -> do_giveup_lock");
-
-                clearTimeout(process.check_timeout_id);
-                clearTimeout(process.await_timeout_id);
-                clearTimeout(process.giveup_timeout_id);
-
-                delete lib.lock.acquiring_process[lock_name];
-
-                process.reject(lock_name);
-
-            };
-            
-            var do_await_lock = function(){
-                if (lib.lock.debug) console.log("lib.lock.get_lock(", lock_name , ") -> do_await_lock");
-                var lock_take_success = false;
-                var process = lib.lock.acquiring_process[lock_name];
-                
-                if (!process)
-                {
-                    return;
-                }
-                
-                if (lib.lock.acquiring_process[lock_name].lock_taken_arrived)
-                {
-                    lock_take_success = false;
-                }
-                else
-                {
-                    lock_take_success = true;
-                }
-                
-                if (lock_take_success)
-                {
-                    if (lib.lock.debug) console.log("lib.lock.get_lock(", lock_name , ") -> do_await_lock -> lock_take_success:true");
-                
-                    clearTimeout(process.check_timeout_id);
-                    clearTimeout(process.await_timeout_id);
-                    clearTimeout(process.giveup_timeout_id);
-                    
-                    delete lib.lock.acquiring_process[lock_name];
-                    
-                    lib.lock.acquired_locks[lock_name] = {
-                        lock_name: lock_name,
-                        free_lock_timeout_id: setTimeout(function(){
-                            lib.lock.free(lock_name);
-                        }, release_timeout)
-                    };
-                    
-                    process.resolve(lock_name);
-                }
-                else
-                {
-                    if (lib.lock.debug) console.log("lib.lock.get_lock(", lock_name , ") -> do_await_lock -> lock_take_success:false");                    
-                }
-            };
-            
-            var promise = new Promise(function(resolve, reject){
-                
-                var obj = {
-                    lock_name: lock_name,
-                    promise: promise,
-                    resolve: resolve,
-                    reject: reject,
-                    check_timeout_id: setTimeout(do_check_lock, check_interval),
-                    await_timeout_id: setTimeout(do_await_lock, await_timeout),
-                    giveup_timeout_id: setTimeout(do_giveup_lock, giveup_timeout),
-                    lock_taken_arrived: false,
-                    start_time: lib.date.timestamp(),
-                    rock_scissors_paper: Math.floor(Math.random() * 1000000000)
-                };
-                
-                lib.lock.acquiring_process[lock_name] = obj;
-                
-            });
-            
-            do_check_lock();
-            
-            return promise;
-            
-        },
-        /**
-         * Free previously acquired lock
-         * @param {string} lock_name
-         */
-        free: function(lock_name) {
-            if (lib.lock.debug) console.log("lib.lock.free(", lock_name , ")");
-                
-            if (lib.lock.acquired_locks.hasOwnProperty(lock_name))
-            {
-                clearTimeout(lib.lock.acquired_locks[lock_name].free_lock_timeout_id);
-                delete lib.lock.acquired_locks[lock_name];
-            }
-        },
-        /**
-         * Acquire lock, then run callback, then automatically frees lock
-         * @param {string} lock_name name of lock
-         * @param {function} callback function to run after lock is taken
-         * @param {int} giveup_timeout How much time to wait for successfule actire (msec), default 2000
-         * @param {int} release_timeout After what time lock should be automatically released, if it didn't happen manually (msec), default 20000
-         * @param {int} await_timeout Interval to receive message "lock_already_taken" to not acquire lock (msec), default 500
-         * @param {int} check_interval Interval to send broadcast message "can_i_take_lock" (msec), default 100
-         */
-        with: function(lock_name, callback, giveup_timeout, release_timeout, await_timeout, check_interval) {
-            lib.lock.get(lock_name, giveup_timeout, release_timeout, await_timeout, check_interval).then(function(){
-                callback();
-                lib.lock.free(lock_name);
-            }, helpers.reject_handler)
-        },
-        /**
-         * Analog of "with" function, but, takes function, that returns promise, and return it's promise, then, automatically frees lock
-         */
-        with_promise: function(lock_name, callback_returning_promise, giveup_timeout, release_timeout, await_timeout, check_interval) {
-            if (lib.lock.debug) console.log("lib.lock.with_promise(", lock_name, ")");
-            return lib.lock.get(lock_name, giveup_timeout, release_timeout, await_timeout, check_interval).then(function(){
-                if (lib.lock.debug) console.log("callback_returning_promise (lock: ", lock_name, ") started");
-                return callback_returning_promise().then(function(result){
-                    if (lib.lock.debug) console.log("callback_returning_promise (lock: ", lock_name, ") finished, freeing lock");
-                    lib.lock.free(lock_name);
-                    return Promise.resolve(result);
-                }).catch(function(err){
-                    if (lib.lock.debug) console.log("callback_returning_promise (lock: ", lock_name, ") errored, freeing lock");
-                    lib.lock.free(lock_name);
-                    return Promise.reject(err);
-                });
-            }, helpers.reject_handler);
-        },
-        /**
-         * Event handler what is called then other tab asks "can i take lock?"
-         * @param {Object} data - data arrived from broadcast
-         */
-        on_can_i_take_lock_handler: function(data){
-            if (lib.lock.debug) console.log("lib.lock.on_can_i_take_lock_handler(", data , ")");
-            
-            var lock_name = data['lock_name'];
-            var start_time = data['start_time'];
-            var rock_scissors_paper = data['rock_scissors_paper'];
-            
-            if (lib.lock.acquired_locks.hasOwnProperty(lock_name))
-            {
-                if (lib.lock.debug) console.log("lib.lock.on_can_i_take_lock_handler(", lock_name , ") -> acquire_locks exists");
-                lib.broadcast.post("lock_already_taken", {"lock_name": lock_name});
-            }
-            else if (lib.lock.acquiring_process.hasOwnProperty(lock_name))
-            {
-                var process = lib.lock.acquiring_process[lock_name];
-                
-                if (lib.lock.debug) console.log("lib.lock.on_can_i_take_lock_handler(", lock_name , ") -> acquiring_process exists");
-                if (lib.lock.debug) console.log("our process start_time:", process.start_time, ", their process start_time:", start_time);
-                if (lib.lock.debug) console.log("our process rock_scissors_paper:", process.rock_scissors_paper, ", their process rock_scissors_paper:", rock_scissors_paper);
-                
-                
-                if (process.start_time < start_time || (
-                        process.start_time === start_time && process.rock_scissors_paper < rock_scissors_paper
-                ))
-                {
-                    if (lib.lock.debug) console.log("lib.lock.get_lock(", lock_name , ") -> acquiring_process exists, and is yonger than arrived");
-                    lib.broadcast.post("lock_already_taken", {
-                        "lock_name": lock_name, 
-                        "start_time": start_time, 
-                        "rock_scissors_paper": process.rock_scissors_paper
-                    });
-                }
             }
             else
             {
-                lib.broadcast.post("you_can_take_lock", {
-                    "lock_name": lock_name, 
-                    "start_time": start_time, 
-                    "rock_scissors_paper": 1000000000
-                });
+                alert("serviceWorker is not supported in your browser");
             }
-        },
-        /**
-         * Event handler that is called then other tab say "I've already taken the lock!"
-         * @param {Object} data
-         * @returns {undefined}
-         */
-        on_lock_already_taken_handler: function(data){            
-            if (lib.lock.debug) console.log("lib.lock.on_lock_already_taken_handler(", data , ")");
-            
-            var lock_name = data['lock_name'];
-            if (lib.lock.acquiring_process.hasOwnProperty(lock_name))
-            {
-                if (lib.lock.debug) console.log("lib.lock.on_lock_already_taken_handler(", data , ") -> lock_taken_arrived = true");
-                lib.lock.acquiring_process[lock_name].lock_taken_arrived = true;
-            }
-        },
-        /**
-         * Event handler that is called than other tab say "Yes, you can take the lock"
-         * @param {type} data
-         * @returns {undefined}
-         */
-        on_you_can_take_lock_handler: function(data){
-            
         }
     },
     /**
      * Cross-tab broadcast messaging and event system.
-     * Allows to send messages between tabs of a single browser.
-     * Used to share keys between tabs, or send signal to clear session on all tasks, if user asks so.
-     * 
-     * Based on browsers's BroadcastChannel, of BroadcastChannel2 (based on a library https://github.com/pubkey/broadcast-channel)
-     * Safari browser doesn't support BroadcastChannel, so BroadcastChannel2 come to the rescue
      */
-    broadcast: {
-        channel: null,
-        debug: false,
-        /**
-         * Initialize channel
-         */
-        init: function(){
-            var bc = window.BroadcastChannel || window.BroadcastChannel2
-            lib.broadcast.channel = new bc('cryptboard-main');
-            lib.broadcast.channel.onmessage = lib.broadcast.receive_raw;
-            lib.broadcast.set_default_listeners();
-        },
-        /**
-         * Close channel
-         */
-        close: function(){
-            lib.broadcast.channel.close();
-        },
-        /**
-         * Send raw data to channel
-         * @param {Object} message
-         */
-        post_raw: function(message)
-        {
-            lib.broadcast.channel.postMessage(message);
-        },
-        /**
-         * Send data with specific type (type is used to detect event handler that should be called)
-         * @param {string} type The type of message
-         * @param {Object} data Data (could be empty)
-         */
-        post: function(type, data)
-        {
-            if (lib.broadcast.debug) console.log("broadcast.post(", type, data, ")");
-            
-            lib.broadcast.post_raw({
-                "type": type,
-                "data": data
-            });
-        },
-        /**
-         * Raw of data
-         * Works universally on BroadcastChannel or BroadcastChannel2
-         * @param {Event|Object} d 
-         */
-        receive_raw: function(d)
-        {
-            // If native BroadcastChannel used:
-            if (d instanceof MessageEvent)
-            {
-                var raw_data = d.data;
-            }
-            // In IE, Safari:
-            else
-            {
-                var raw_data = d;
-            }
-            
-            var res = {
-                "type": "unkown",
-                "data": raw_data
-            };
-            
-            if (raw_data)
-            {
-                if (raw_data.hasOwnProperty("type"))
-                {
-                    res['type'] = raw_data.type;
-                }
-                if (raw_data.hasOwnProperty("data"))
-                {
-                    res['data'] = raw_data.data;
-                }
-            }
-            lib.broadcast.receive(res['type'], res['data']);
-        },
-        /**
-         * Receiver of data with type and usefull payload. 
-         * Detects what event listeners to call, and call them
-         * @param {String} type
-         * @param {Object} data
-         */
-        receive: function(type, data)
-        {
-            if (lib.broadcast.debug) console.log("broadcast.receive(", type, data, ")");
-            var listeners = lib.broadcast.listeners[type];
-            if (listeners)
-            {
-                for (var lid in listeners)
-                {
-                    if (lib.broadcast.debug) console.log("broadcast.listeners[", lid, "](", data, ")");
-                    listeners[lid](data);
-                }
-            }
-        },
-        /**
-         * Listeners would be added here
-         */
-        listeners: {
-        },
-        /**
-         * Add event listener
-         * @param {String} type - the type on which event handler would be called
-         * @param {function} func - handler itself
-         * @param {boolean} once - if true, handler would be removed after it's called
-         * @param {type} timeout - if set there are timeout after that handler would be removed
-         * @param {type} func_on_timeout - function that should be called when timeout happened
-         * @param {type} func_check_once_need_to_be_cleaned - function to check input data to detect, if once-handler should be removed
-         */
-        add_listener: function(type, func, once, timeout, func_on_timeout, func_check_once_need_to_be_cleaned){
-            once = once || false;
-            timeout = timeout || -1;
-            func_on_timeout = func_on_timeout || function(){};
-            func_check_once_need_to_be_cleaned = func_check_once_need_to_be_cleaned || function(data) {return true;};
-            
-            lib.broadcast.listeners[type] = lib.broadcast.listeners[type] || {};
-            
-            do
-            {
-                var lid = "l" + lib.tools.randint(10000000,
-                                                  100000000);                                           
-            }
-            while(lib.broadcast.listeners[type].hasOwnProperty(lid))
-               
-            var timeoutObjId = null;
-              
-            if (once)
-            {
-                if (timeout > 0)
-                {
-                    timeoutObjId = setTimeout(func_on_timeout, timeout);
-                }
-            }
-            
-            lib.broadcast.listeners[type][lid] = function(data){
-                if (timeout > 0 && once)
-                {
-                    clearTimeout(timeoutObjId);
-                }
-                
-                if (once && func_check_once_need_to_be_cleaned(data)) {
-                    delete lib.broadcast.listeners[type][lid];
-                }
-                
-                var res = func(data);
-                
-                return res;
-            };
-        },
-        /**
-         * Set default listeners that are used accross the app
-         * @todo move it into lib.core.ini
-         */
-        set_default_listeners: function(){
-            // If we got message "give me private key" - lets send private key back
-            lib.broadcast.add_listener("give_me_private_key", function(data){
-                lib.broadcast.post("take_private_key", {"private_key": lib.crypto.keys.private});                
-            });
-            
-            // If we got message "take private key" - lets remember received private key as our own
-            lib.broadcast.add_listener("take_private_key", function(data){
-                if (data['private_key'])
-                {
-                    lib.crypto.keys['private'] = data['private_key'];
-                }
-            });
-            
-            // If we got message "kill session", let's do it!
-            lib.broadcast.add_listener("kill_session", function(data){
-                lib.client.kill_session();
-            });
-            
-            
-            lib.broadcast.add_listener("uid_changed", function(data){
-                window.location.reload();
-            });
-            
-            lib.broadcast.add_listener("keys_regenerated", function(data){
-                window.location.reload();
-            })
-        },
-        /**
-         * Request private key from other tab.
-         * Used if private key was hided from localstorage (lib.crypto.hide_private_key)
-         * @param {integer} timeout - how many time to wait before giveup
-         * @param {integer} retries - how many times to send "give_me_key" message
-         * @returns {Promise}
-         */
-        request_private_key: function(timeout, retries){
-            retries = retries || 3;
-            timeout = timeout || 2000;
-            var single_timeout = parseInt(timeout / retries);
-            var retries_made = 0;
-            
-            return new Promise(function(resolve, reject){
-                console.log("RPK: Promise is created")
-                
-                console.log("RPK: Creating timeout for single_retry");
-                
-                var timeout_id = null;
-                
-                var retry_give_me_key = function(){
-                    console.log("RPK: retry_give_me_key()");
-                    lib.broadcast.post("give_me_private_key", {});
-                    console.log("RPK: posted give_me_private_key");
-                    retries_made += 1;
-                    if (retries_made > retries)
-                    {
-                        console.log(`RPK: as ${retries_made} > ${retries} clearing timeout`)
-                        clearTimeout(timeout_id);
-                        timeout_id = null;
-                    }
-                    else
-                    {
-                        console.log(`RPK: as ${retries_made} <= ${retries} resetting retry_give_me_key to be called after ${single_timeout} msec`);
-                        timeout_id = setTimeout(retry_give_me_key, single_timeout);
-                    }
-                };
-                
-                retry_give_me_key();
-                
-                console.log("RPK: Adding 'take_private_key' listener");
-                lib.broadcast.add_listener(
-                    "take_private_key", 
-                    //Success, data arrived!
-                    function(data){
-                        console.log("RPK: take_private_key arrived");
-                        // If date really arrived
-                        if ((data.hasOwnProperty("private_key") && !!data['private_key']))
-                        {
-                            console.log("RPK: take_private_key has real private_key! Clearing timeout, resolving Promise!");
-                            //Clear timeout
-                            clearTimeout(timeout_id);
-                            timeout_id = null;
-                            //finish promise
-                            resolve(data);
-                        }
-                    }, true, timeout, 
-                    //error, common timeout
-                    function(){
-                        console.log("RPK: take_private_key handler timeout happened. Clearing timeout, rejecting promise");
-                        //Clear timeout
-                        clearTimeout(timeout_id);
-                        timeout_id = null;
-                        //reject promise
-                        reject(new Error("timeout"));
-                    },
-                    // Do we need to recet handler?
-                    function(data){
-                        console.log("RPK: checking for real private_key arrived for 'once' handler rmoval");
-                        // If data really arrived - yes, we need
-                        return (data.hasOwnProperty("private_key") && !!data['private_key']);
-                    }
-                );
-            });
-        }
-    },
+    broadcast: new BroadcastMessanger(true),
     /**
      * Library to generate avatars based on uid and public_key
      */
@@ -2236,7 +1693,7 @@ var lib = {
         }
     },
     files: {
-        debug: false,
+        debug: true,
         max_file_size: 1024 * 1024 * 10,
         file_part_size: 1024 * 200,
         update_file_parts: function(file_id){
@@ -2394,8 +1851,10 @@ var lib = {
             }, helpers.reject_handler);
             
         },
-        auto_send_file_processor: new helpers.IntervalCaller(function() {
-            return lib.files.process_send_file_queue();
+        auto_send_file_processor: new IntervalCaller(function() {
+            return Locker.get("process_send_file_queue").with_lock(function(){
+                return lib.files.process_send_file_queue();
+            });
         }, 150, "auto_send_file_processor", false),
         process_send_file_queue: function(){
             var current_sending_files = lib.storage.get_local("current_sending_files", []);
@@ -3351,7 +2810,7 @@ var lib = {
                 });
             });
         },
-        auto_check_refresh_auth: helpers.IntervalCaller(function(){
+        auto_check_refresh_auth: new IntervalCaller(function(){
             return lib.ajax.check_refresh_auth();
         }, 30000, "lib.ajax.auto_check_refresh_auth", true)        
     },
@@ -3587,7 +3046,11 @@ var lib = {
                             $(".message#" + msg_id).remove();
                         });
                     });
-                    return Promise.all(promises);
+                    
+                    return Promise.all(promises).then(function(res){
+                        lib.broadcast.post("messages_changed");
+                        return res;
+                    });
                 });
             });
         },
@@ -3596,12 +3059,14 @@ var lib = {
                 return lib.msg.delete(ids);
             });
         },
-        auto_checker_msg: new helpers.IntervalCaller(function(){
-            return lib.msg.check_new_and_draw().catch(function(err){
-                if (err !== "check_new already in progress")
-                {
-                    throw err;
-                }
+        auto_checker_msg: new IntervalCaller(function(){
+            Locker.get("check_new_and_draw").with_lock(function(){
+                return lib.msg.check_new_and_draw().catch(function(err){
+                    if (err !== "check_new already in progress")
+                    {
+                        throw err;
+                    }
+                });
             });
         }, 2000, "lib.msg.new_auto_checker", true),
         send_raw: function(raw_payload, uids){
@@ -3916,6 +3381,21 @@ var lib = {
         send: function(msg, receiver){
             var type = msg['type'];
             var payload = msg['payload'];
+        }
+    },
+    /**
+     * Object responsible for message exchange protocol
+     */
+    protocol: {
+        debug: false,
+        /**
+         * Add raw message to send queue
+         * @param String uid
+         * @param String data
+         * @returns Promise
+         */
+        add_message: function(uids, payload){
+            
         }
     },
     crypto: {

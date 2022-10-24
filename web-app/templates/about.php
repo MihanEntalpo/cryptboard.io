@@ -47,6 +47,7 @@
         + <a href='https://arcticlab.ru/arcticmodal/' target='_blank'>ArcticModal</a>
         + <a href='https://github.com/chuckfairy/VanillaQR.js' target='_blank'>VanillaJs QRCode generator</a>
         + <a href='https://github.com/zenorocha/clipboard.js' target="_blank">Clipboard.js</a>
+        + <a href='https://github.com/robertknight/idb-mutex' target="_blank">IndexedDB Lock mutex</a>
     </li>
     <li>RSA encryption implemented by: <a href='https://github.com/travist/jsencrypt' target='_blank'>JSEncrypt library</a></li>
     <li>AES encryption and keys generation implemented by: <a href='https://github.com/digitalbazaar/forge' target='_blank'>Forge library</a></li>
