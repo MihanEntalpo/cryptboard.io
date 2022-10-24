@@ -19,22 +19,23 @@
     * Sending by email
     * Publish on your website
 * Private RSA key **never** leaves your browser and is not being transferred anywhere
+* Public key not being sent to server, so in case of bad random generator on client side, it couldn't be used to compute private key.
 * When a message is to be sent there are symmetrical AES key of 256 bit is generated and data gets encrypted by this key
 * The AES key itself gets encrypted by the public RSA key of a receiver and added to the encrypted message string
 * As you can have multiple receivers message gets encrypted separately for every receiver
-* So you need to have a private RSA key to decrypt the whole message and as it is not being sent anywhere, no one can decrypt the message except the legitimate receiver
+* Since one need to have a private RSA key to decrypt the whole message and as it (the key) is not being sent anywhere, no one can decrypt the message except the legitimate receiver
 * Encrypted data send to a server, specifying uid of the receiver, so the server could know who should get this message. Contents of a message are unknown to a server that it couldn't decrypt.
 * After the message got from the server, the receiver first using its private key to decrypt AES key that was encrypted by the sender. After that AES key is used to decrypt the message payload.
 
 ## How can I trust CryptBoard?
 
 * The application is intentionaly made very simple, JavaScript files are not minified and obfuscated, so you easily can see the code
-* Main application file <a href='/js/main.js' target=_blank>main.js</a> is easy to analyse. Search by a "private" word on in allows to see all the places there something happening to a private key. 
+* Main application file <a href='/js/frontend.js' target=_blank>frontend.js</a> and some other small files are easy to analyse. Search by a "private" word on in allows to see all the places there something happening to a private key. 
 * Also in the future I'm planning to create some kind of "critical section" in code and move there all the work with keys, so it would be easier to analyze the code.
 * There are OpenSource libraries used for encryption/decryption, namely JSEncrypt and Forge. I'm not a professional cryptographist so, relying on third-party analysis of these libraries (later will add links to papers)
-* All the javascript modules are taken from official repositories and could be easily compared (then I publish source code, I'll put direct links to where I've got every library) as specified in <a href='#about' class="simple">About</a>
+* All the javascript modules are taken from official repositories and could be easily compared as specified in <a href='#about' class="simple">About</a>
 * You don't have to trust a backend server at all, because all the project is made with the thought that server could be compromised and still not having an ability to decrypt messages.
-* Later, then source code would be published, I'll create a build that everyone could easily install on their server.
+* As source code is published, you can install your own server of cryptboard.io
 
 ## How to ensure maximum security using CryptBoard?
 
