@@ -42,9 +42,23 @@ function get_nginx_headers($function_name='getallheaders'){
     return $all_headers;
 }
 
-function render($template, $vars=[], $layout=null)
+function render($template, $vars=[], $layout=null, $context=null)
 {
-    $rendered = ob(function() use ($vars, $template) {
+    static $last_context = NULL;
+    
+    if ($context)
+    {
+        if (is_null($last_context))
+        {
+            $last_context = $context;
+        }
+    }
+    else
+    {
+        $context = $last_context;
+    }
+    
+    $rendered = ob(function() use ($vars, $template, $context) {
         if ($vars && is_array($vars))
         {
             extract($vars);
@@ -55,7 +69,7 @@ function render($template, $vars=[], $layout=null)
     if ($layout)
     {
         $vars['content'] = $rendered;
-        $result = ob(function() use ($vars, $layout) {
+        $result = ob(function() use ($vars, $layout, $context) {
             extract($vars);
             require(__DIR__ . "/../templates/layouts/" . $layout . ".php");
         });

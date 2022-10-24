@@ -22,8 +22,43 @@ Router::addMiddleware(function(){
     }
 });
 
-Router::add(["pattern" => "#^/(?P<page>about|security|clipboard|share-key|add-key)(^|[^a-zA-Z0-9_-])?#", "type"=>"regexp"], function($route){
-   echo render("_tabs_content", ["page"=>$route['matches']['page']], "default"); 
+$ssr_pages = ["about", "security", "clipboard", "share-key", "add-key"];
+
+$meta_default = [
+    "og_title" => "",
+    "og_type" => "",
+    "og_url" => "",
+    "og_image" => "",
+    "keywords" => "",
+    "description" => "",
+    "title" => ""
+];
+
+$meta_pages = array_map(function($meta_page) use ($meta_default) {
+    return array_merge($meta_default, $meta_page);
+}, [
+    "about" => [
+        "og_title" => "Cryptboard.io encrypted web chat and clipboard"
+    ],
+    "security" => [
+        
+    ],
+    "clipboard" => [
+        
+    ],
+    "share-key" => [
+        
+    ],
+    "add-key" => [
+        
+    ]
+]);
+
+Router::add(["pattern" => "#^/(?P<page>" . join("|", $ssr_pages) . ")(^|[^a-zA-Z0-9_-])?#", "type"=>"regexp"], function($route) use ($meta_pages) {
+   $page = $route['matches']['page'];
+   echo render("_tabs_content", ["page"=>$page], "default", [
+       "meta"=>$meta_pages[$page]
+   ]); 
 });
 
 Router::add(["pattern" => "#^(/|index\.php\??)$#", "type"=>"regexp"], function(){

@@ -6,11 +6,13 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         
+        <?php echo render("_meta", "");?>
+        
         <script src="/js/libs/jquery-3.6.0.min.js"></script>
         <script src="/js/libs/popper.min.js"></script>
         <link rel="stylesheet" href="/bootstrap-5.0.2-dist/css/bootstrap.min.css" >
         <link rel="stylesheet" href="/css/jquery.arcticmodal.css" >
-        <link rel="stylesheet" href="/css/style.css?hash=<?=md5_file(__DIR__ . "/../../public/css/style.css")?>" >
+        <link rel="stylesheet" href="/css/style.css?hash=<?php echo md5_file(__DIR__ . "/../../public/css/style.css")?>" >
 
         <script src="/js/libs/jsencrypt.js"></script>
         <script src="/fontawesome-free-5.15.3-web/js/all.js"></script>
@@ -31,15 +33,16 @@
         <!-- Later we will implement openpgp encryption -->
         <!-- <script src="/js/openpgp.js"></script> -->
         
-        <script src="/js/env.js?hash=<?=md5_file(__DIR__ . "/../../public/js/env.js")?>"></script>
-        <script src="/js/main.js?hash=<?=md5_file(__DIR__ . "/../../public/js/main.js")?>"></script>
+        <script src="/js/env.js?hash=<?php echo md5_file(__DIR__ . "/../../public/js/env.js")?>"></script>
+        <script src="/js/shared.js?hash=<?php echo md5_file(__DIR__ . "/../../public/js/shared.js")?>"></script>
+        <script src="/js/frontend.js?hash=<?php echo md5_file(__DIR__ . "/../../public/js/frontend.js")?>"></script>
 
     </head>
     <body>
 
-        <?=render("_popover", "")?>    
+        <?php echo render("_popover", "")?>    
 
-        <?=render("_menu", "")?>
+        <?php echo render("_menu", "")?>
 
         <main role="main" class="container-fluid">
 
