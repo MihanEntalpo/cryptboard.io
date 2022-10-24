@@ -60,6 +60,6 @@
 
 <ul>
     <li>
-        Source code would be published later after some polishing and 
+        Source code is published at <a href="https://github.com/MihanEntalpo/cryptboard.io">https://github.com/MihanEntalpo/cryptboard.io</a>
     </li>
 </ul>
