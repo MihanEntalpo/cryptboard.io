@@ -1,6 +1,6 @@
 <h1>CryptBoard - encrypted anonymous internet clipboard</h1>
 
-<div class='alert alert-warning'>This is a beta-version. In case of problems you can contact developer in Telegram chat:<a href='https://t.me/joinchat/QZNQ2I35mgFmNmFi'>https://t.me/joinchat/QZNQ2I35mgFmNmFi</a></div>
+<div class='alert alert-warning'>This is a beta-version. In case of problems you can contact developer via <a href='https://github.com/MihanEntalpo/cryptboard.io/issues'>github issues</a> or in Telegram chat:<a href='https://t.me/joinchat/QZNQ2I35mgFmNmFi'>https://t.me/joinchat/QZNQ2I35mgFmNmFi</a></div>
 
 <h2>What's that and why?</h1>
 
