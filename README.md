@@ -17,10 +17,10 @@ Website: https://cryptboard.io/
 ## Features
 
 * Anonymous authorization on the server without the need for registration
-* Hybrid RSA+AES encryption of data with asymmetric keys
-* All sent data encrypted on the client and could not be decrypted on the server
+* Hybrid RSA+AES encryption of data with asymmetric keys stored on client
+* All sent data encrypted on the client and could not be decrypted by the server
 * Clients adding each other to the "receivers list" by sending their public key and user ID using third-party channel
-* Possible to share public key user ID by scanning QR-code
+* Possible to add public key and user ID by scanning QR-code
 * Single button click to clear all client's data and keys and start a new session
 
 ## Disclaimers
@@ -42,7 +42,7 @@ Website: https://cryptboard.io/
 * After uid and key is added you can send text or files back and forth between devices (or people)
 * Avatars should be used to check if uid and the public key wasn't changed while traveling through third-party messenger
 
-Details on secure usage could be found at https://cryptboard.io/#tab=security
+Details on secure usage could be found at https://cryptboard.io/security
 
 ## Technologies
 
@@ -50,7 +50,7 @@ Details on secure usage could be found at https://cryptboard.io/#tab=security
 * Database used by backend server is Redis
 * Frontend is written on html + css + vanillaJs + jQuery + Bootstrap
 
-Detail on used technologies can be seen here: https://cryptboard.io/#tab=about
+Detail on used technologies can be seen here: https://cryptboard.io/about
 
 ## Deploying your own installation
 
