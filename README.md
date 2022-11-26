@@ -188,7 +188,25 @@ git clone git@github.com:MihanEntalpo/cryptboard.io.git
 cp web-app/.env.example web-app/.env
 ```
 
-4. Generate public and private keys for usage with JWT:
+4. Install composer, and install requirements:
+
+Composer installation instructions are here: https://getcomposer.org/download/
+
+Run:
+
+```bash
+cd web-app
+./composer.phat install
+```
+
+Or if you've installed composer into your PATH:
+
+```bash
+cd web-app
+composer.phat install
+```
+
+5. Generate public and private keys for usage with JWT:
 
 Run command:
 
@@ -200,7 +218,7 @@ openssl rsa -in jwtRS256.key -pubout -outform PEM -out jwtRS256.key.pub
 
 Files jwtRS256.key and jwtRS256.key.pub would be created.
 
-5. Put contents of the files to .env file
+6. Put contents of the files to .env file
 
 Content of the files should be put in one-liners with "\n" string joining splitted lines, and put it to JWT_PUBLIC_KEY and JWT_PRIVATE_KEY variables.
 
@@ -216,13 +234,13 @@ Fill JWT_PUBLIC_KEY in .env:
 LINE=$(cat ./web-app/jwtRS256.key.pub | tr '\n' '$' | sed 's|\$|\\\\n|g;s|^|JWT_PUBLIC_KEY=|g'); sed -i "s|^JWT_PUBLIC_KEY.*|$LINE|g" -i ./web-app/.env
 ```
 
-6. Fill some other variables
+7. Fill some other variables
 
 SERVER_HOST should be set to your HTTP host configured in Nginx or any other reverse-proxy server.
 
 On official app this variable is set to cryptboard.io
 
-7. Configure Nginx
+8. Configure Nginx
 
 Use file conf/nginx/dockerless.conf as a template for your configuration.
 
@@ -230,7 +248,7 @@ You should change:
 
 server_name, SSL certificate and key, root folder and PHP fastcgi_pass url
 
-8. Open site in browser and check if it's running.
+9. Open site in browser and check if it's running.
 
 If it's not, look for logs of nginx and php and check what should be changed.
 
