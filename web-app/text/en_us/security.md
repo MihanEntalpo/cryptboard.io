@@ -1,6 +1,6 @@
 # CryptBoard Security
 
-## Ho does CryptBoard work?
+## How does CryptBoard work?
 
 * Data is encrypted on a client-side (in browser) and decrypted also on the client-side (and could be done only by the right receiver)
 * Data got transferred by a server in encrypted form and the server has no way to decrypt it
