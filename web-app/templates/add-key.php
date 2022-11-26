@@ -14,7 +14,7 @@
     <label for="add_uid" class="form-label">Uid</label>
     <input type="text" class="form-control" id="add_uid" onkeyup="lib.ui.add_key.validate()" onchange="lib.ui.add_key.validate()" autocomplete="off">
     <div id="add_uid_err" class="invalid-feedback">
-        Uid should be a valud UUID number
+        Uid should be a valid UUID number
     </div>
   </div>
   <div class="mb-3">
