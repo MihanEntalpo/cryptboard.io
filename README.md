@@ -1,6 +1,6 @@
-# CryptBoard.io - anonymous encrypted web clipboard and char
+# CryptBoard.io - anonymous encrypted web clipboard and chat
 
-Cryptboard.io allows to send text and files between multiple devices 
+Cryptboard.io allows to send text messages and files between multiple devices 
 
 Website: https://cryptboard.io/
 
@@ -8,8 +8,8 @@ Website: https://cryptboard.io/
 
 ## Why would I need it?
 
-* To copy and paste data/files between Host and Virtual machine where clipboard not supported
-* To copy and paste data/files into Remote Desktop, such as VMWare Horizon, RDP, and others where clipboard doesn't work or is disabled
+* To copy and paste text/files between Host and Virtual machine where clipboard not supported
+* To copy and paste text/files into Remote Desktop, such as VMWare Horizon, RDP, and others where clipboard doesn't work or disabled (I personally started to create this tool just to solve the problem of disabled clipboard sharing on customer's VMWare Horizon)
 * To send valuable data such as passwords or some security keys and tokens without danger of it being intercepted
 * To exchange information in a hostile environment where the server could be evil and yet not giving it a chance to decrypt messages
 * Doing all this stuff without the need for registration
@@ -27,7 +27,7 @@ Website: https://cryptboard.io/
 
 * Application is on its beta stage so some bugs could be out where
 * Application is written initially for my own use so code isn't perfect and would be refactored later
-* Design and all the frontend is made by a backend programmer, so it could look quite ugly
+* Design and all the frontend is made by a backend programmer, so it looks quite ugly
 
 ## Usage of the official app
 
@@ -50,7 +50,7 @@ Details on secure usage could be found at https://cryptboard.io/security
 * Database used by backend server is Redis
 * Frontend is written on html + css + vanillaJs + jQuery + Bootstrap
 
-Detail on used technologies can be seen here: https://cryptboard.io/about
+Detail on used technologies is here: https://cryptboard.io/about
 
 ## Deploying your own installation
 
@@ -70,11 +70,13 @@ Detail on used technologies can be seen here: https://cryptboard.io/about
 git clone git@github.com:MihanEntalpo/cryptboard.io.git
 ```
 
-2. Install docker and docker-compose
+2. Install docker, docker-compose and nginx
 
 Installation of docker described at https://docs.docker.com/get-docker/
 
 Installation of docker-compose described at https://docs.docker.com/compose/install/
+
+Install nginx by your repo's package manager
 
 3. Create config file
 
@@ -87,7 +89,9 @@ cp web-app/.env.docker.example web-app/.env.docker
 Run command:
 
 ```bash
-ssh-keygen -t rsa -b 2048 -f jwtRS256.key -N ""
+ssh-keygen -t rsa -b 4096 -m PEM -f jwtRS256.key
+# Don't add passphrase
+openssl rsa -in jwtRS256.key -pubout -outform PEM -out jwtRS256.key.pub
 ```
 
 Files jwtRS256.key and jwtRS256.key.pub would be created.
@@ -130,6 +134,12 @@ SERVER_PORT should be a port, that is opened from docker container with running 
 ```
 
 All normal docker-compose commands could be used with docker-compose.sh, for example:
+
+```
+./docker-compose.sh ps -a
+./docker-compose.sh up -d
+./docker-compose.sh stop
+```
 
 So, instead of `docker-compose ps` you run `./docker-compose.sh ps` and so on.
 
@@ -178,41 +188,59 @@ git clone git@github.com:MihanEntalpo/cryptboard.io.git
 cp web-app/.env.example web-app/.env
 ```
 
-4. Generate public and private keys for usage with JWT:
+4. Install composer, and install requirements:
+
+Composer installation instructions are here: https://getcomposer.org/download/
+
+Run:
+
+```bash
+cd web-app
+./composer.phat install
+```
+
+Or if you've installed composer into your PATH:
+
+```bash
+cd web-app
+composer.phat install
+```
+
+5. Generate public and private keys for usage with JWT:
 
 Run command:
 
 ```bash
-ssh-keygen -t rsa -b 2048 -f jwtRS256.key -N ""
+ssh-keygen -t rsa -b 4096 -m PEM -f jwtRS256.key
+# Don't add passphrase
+openssl rsa -in jwtRS256.key -pubout -outform PEM -out jwtRS256.key.pub
 ```
 
 Files jwtRS256.key and jwtRS256.key.pub would be created.
 
-5. Put contents of the files to .env.docker
+6. Put contents of the files to .env file
 
 Content of the files should be put in one-liners with "\n" string joining splitted lines, and put it to JWT_PUBLIC_KEY and JWT_PRIVATE_KEY variables.
 
 To make it simple just run the following bash command:
 
-Fill JWT_PRIVATE_KEY in .env.docker:
+Fill JWT_PRIVATE_KEY in .env:
 ```bash
 LINE=$(cat ./web-app/jwtRS256.key | tr '\n' '$' | sed 's|\$|\\\\n|g;s|^|JWT_PRIVATE_KEY=|g'); sed -i "s|^JWT_PRIVATE_KEY.*|$LINE|g" -i ./web-app/.env
 ```
 
-Fill JWT_PUBLIC_KEY in .env.docker:
+Fill JWT_PUBLIC_KEY in .env:
 ```bash
 LINE=$(cat ./web-app/jwtRS256.key.pub | tr '\n' '$' | sed 's|\$|\\\\n|g;s|^|JWT_PUBLIC_KEY=|g'); sed -i "s|^JWT_PUBLIC_KEY.*|$LINE|g" -i ./web-app/.env
 ```
 
-6. Fill some other variables
+7. Fill some other variables
 
 SERVER_HOST should be set to your HTTP host configured in Nginx or any other reverse-proxy server.
 
 On official app this variable is set to cryptboard.io
 
-SERVER_PORT should be a port, that is opened from docker container with running app
-
-7. Configure Nginx
+8. Configure Nginx
 
 Use file conf/nginx/dockerless.conf as a template for your configuration.
 
@@ -220,7 +248,7 @@ You should change:
 
 server_name, SSL certificate and key, root folder and PHP fastcgi_pass url
 
-8. Open site in browser and check if it's running.
+9. Open site in browser and check if it's running.
 
 If it's not, look for logs of nginx and php and check what should be changed.
 

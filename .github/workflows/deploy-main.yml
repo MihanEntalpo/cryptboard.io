@@ -7,5 +7,5 @@ jobs:
   deploy-main:
     runs-on: self-hosted
     steps:
-      - run: bash -c "cd ~/cryptboard.io && git pull && cd ./web-app && export HOME=/home/cryptboard && composer install"
+      - run: bash -c "cd ~/cryptboard.io && git reset --hard && git pull && cd ./web-app && export HOME=/home/cryptboard && composer install"
 
