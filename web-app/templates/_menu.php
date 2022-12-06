@@ -17,11 +17,14 @@
             <li class="nav-item">
               <a class="nav-link" href="/add-key" data-tab="add-key">Add key</a>
             </li>
-            <li class="nav-item active">
+            <li class="nav-item">
               <a class="nav-link" href="/about" data-tab="about">About</a>
             </li>
-            <li class="nav-item active">
+            <li class="nav-item">
               <a class="nav-link" href="/security" data-tab="security">Security</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="https://github.com/MihanEntalpo/cryptboard.io">Deploy your own server</a>
             </li>
           </ul> 
             <ul class="nav navbar-nav navbar-right">
