@@ -48,7 +48,8 @@ var lib = {
                         lib.ui.popover.set_li_icon("auth", "fa-check-square");                    
                     }).catch(function(err){
                         lib.ui.popover.set_li_icon("auth", "fa-exclamation-triangle"); 
-                        lib.modal.alert("Auth Erro", "Inital authentication failed! Page would be reloaded", function(){
+                        console.error(e);
+                        lib.modal.alert("Auth Error", "Inital authentication failed! Page would be reloaded", function(){
                             window.location.reload();
                         });
                     }).then(function(){
