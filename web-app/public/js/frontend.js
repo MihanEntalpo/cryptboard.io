@@ -695,8 +695,7 @@ var lib = {
                     file_lines.push(`
                     <tr data-num='${file.index}' class='file-row'>
                         <td>
-                            <input type=checkbox ${file_too_large ? '' : 'checked'} ${file_too_large ? 'disabled' : ''} class='file-select-checkbox' data-num='${file.index}'
-                            onchange='$(this).'>
+                            <input type=checkbox ${file_too_large ? '' : 'checked'} ${file_too_large ? 'disabled' : ''} class='file-select-checkbox' data-num='${file.index}'>
                         </td>
                         <td class=file-name-and-size>
                             ${file.name} <div class='file-size'>(${lib.tools.num_with_spaces(file.size)} bytes)</div>
@@ -706,8 +705,7 @@ var lib = {
                     `<tr data-num='${file.index}' class='textarea-row'>
                         <td colspan=2>
                             <textarea class='file-comment' placeholder='File comment' data-num='${file.index}'></textarea>
-                        </td>
-                    </td>
+                        </td></tr>
                     `));
                 });
                 
@@ -3430,7 +3428,7 @@ var lib = {
                 // Please close DevTools :) You are not supposed to see this
                 debugger;
             }
-            var aes_key = lib.crypto.get_radnom_aes_key();
+            var aes_key = lib.crypto.get_random_aes_key();
             var aes_iv = lib.crypto.get_random_aes_initial_vector();
             var key_and_ivector = {
                 "key": forge.util.encode64(aes_key),
@@ -3520,7 +3518,7 @@ var lib = {
         get_random_bytes: function(number){
             return forge.random.getBytesSync(number);
         },
-        get_radnom_aes_key: function(){
+        get_random_aes_key: function(){
             return lib.crypto.get_random_bytes(32);
         },
         get_random_aes_initial_vector: function(){
@@ -3857,7 +3855,7 @@ var lib = {
            },
 
            /**
-            * Standart alert analog
+            * Standard alert analog
             * @param {string} title Title
             * @param {string} contentHtml Content (message)
             * @param {function} closeCallback function that would be called on modal close
@@ -3897,7 +3895,7 @@ var lib = {
                    }
            },
            /**
-            * Standart confirm analog
+            * Standard confirm analog
             * @param {string} title
             * @param {string} contentHtml
             * @param {function} okCallback
