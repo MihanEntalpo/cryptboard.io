@@ -65,11 +65,11 @@ class Storage
         $v = self::encode($value);
         if ($expire)
         {
-            $res = self::$r->set($key, $v);
+            $res = self::$r->set($key, $v, $expire);
         }
         else
         {
-            $res = self::$r->set($key, $v, $expire);
+            $res = self::$r->set($key, $v);
         }
         return $res;
     }
