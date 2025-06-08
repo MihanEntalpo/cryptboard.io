@@ -196,14 +196,14 @@ Run:
 
 ```bash
 cd web-app
-./composer.phat install
+./composer.phar install
 ```
 
 Or if you've installed composer into your PATH:
 
 ```bash
 cd web-app
-composer.phat install
+composer.phar install
 ```
 
 5. Generate public and private keys for usage with JWT:
