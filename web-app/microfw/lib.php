@@ -110,7 +110,18 @@ function echo_json($data)
 {
     header("Content-type: application/json");
     echo json_encode($data);
-    
+
+}
+
+function echo_error($error, $message)
+{
+    http_response_code(500);
+    header("Content-type: application/json");
+    echo json_encode([
+        "data" => false,
+        "error" => $error,
+        "message" => $message,
+    ]);
 }
 
 function get_conf($variable, $default=null)
