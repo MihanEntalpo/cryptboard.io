@@ -345,7 +345,7 @@ class IntervalCaller{
             if (this.interval)
             {
                 clearInterval(this.interval);
-                this.inteval = null;
+                this.interval = null;
             }
         };
     };
