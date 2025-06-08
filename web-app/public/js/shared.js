@@ -37,7 +37,7 @@ var helpers = {
         return closure;
     },
     /**
-     * Defult promise reject handler. Used for debugging.
+     * Default promise reject handler. Used for debugging.
      */
     reject_handler: function(){
         console.error("Universal reject handler. Arguments:", arguments);
@@ -121,7 +121,7 @@ class BroadcastMessanger {
         }
 
         var res = {
-            "type": "unkown",
+            "type": "unknown",
             "data": raw_data
         };
 
@@ -147,7 +147,7 @@ class BroadcastMessanger {
         }
     }
     /**
-     * Receiver of data with type and usefull payload. 
+     * Receiver of data with type and useful payload. 
      * Detects what event listeners to call, and call them
      * @param {String} type
      * @param {Object} data
@@ -519,7 +519,7 @@ class InterTabLock {
     /**
      * Acquire lock
      * @param {string} lock_name name of lock
-     * @param {int} giveup_timeout How much time to wait for successfule actire (msec), default 2000
+     * @param {int} giveup_timeout How much time to wait for successful acquire (msec), default 2000
      * @param {int} release_timeout After what time lock should be automatically released, if it didn't happen manually (msec), default 20000
      * @param {int} await_timeout Interval to receive message "lock_already_taken" to not acquire lock (msec), default 500
      * @param {int} check_interval Interval to send broadcast message "can_i_take_lock" (msec), default 100
@@ -655,7 +655,7 @@ class InterTabLock {
      * Acquire lock, then run callback, then automatically frees lock
      * @param {string} lock_name name of lock
      * @param {function} callback function to run after lock is taken
-     * @param {int} giveup_timeout How much time to wait for successfule actire (msec), default 2000
+     * @param {int} giveup_timeout How much time to wait for successful acquire (msec), default 2000
      * @param {int} release_timeout After what time lock should be automatically released, if it didn't happen manually (msec), default 20000
      * @param {int} await_timeout Interval to receive message "lock_already_taken" to not acquire lock (msec), default 500
      * @param {int} check_interval Interval to send broadcast message "can_i_take_lock" (msec), default 100
@@ -713,7 +713,7 @@ class InterTabLock {
                     process.start_time === start_time && process.rock_scissors_paper < rock_scissors_paper
             ))
             {
-                if (this.debug) console.log("this.get_lock(", lock_name , ") -> acquiring_process exists, and is yonger than arrived");
+                if (this.debug) console.log("this.get_lock(", lock_name , ") -> acquiring_process exists, and is younger than arrived");
                 this.broadcast.post("lock_already_taken", {
                     "lock_name": lock_name, 
                     "start_time": start_time, 
@@ -752,6 +752,7 @@ class InterTabLock {
      */
     on_you_can_take_lock_handler(data){
 
+        if (this.debug) console.log("this.on_you_can_take_lock_handler(", data, ")");
     }
 }
 
