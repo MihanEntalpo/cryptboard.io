@@ -108,10 +108,18 @@ class Storage
         return self::$r->lLen($list_key);
     }
     
-    public static function lGetRage($list_key, $start, $end)
+    /**
+     * Retrieve a range of elements from a list.
+     *
+     * @param string $list_key List key name
+     * @param int $start Start index
+     * @param int $end End index
+     * @return array Decoded list elements
+     */
+    public static function lGetRange($list_key, $start, $end)
     {
         return self::decodeArray(self::$r->lGetRange($list_key, $start, $end));
-        
+
     }
     
     public static function lGet($list_key, $index)

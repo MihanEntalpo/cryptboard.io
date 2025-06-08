@@ -45,7 +45,7 @@ function add_message($sender, $receiver, $payload)
 function get_messages_list($uid)
 {
     $messages_count = Storage::lLen("messages_to_uid:$uid");
-    $message_ids = Storage::lGetRage("messages_to_uid:$uid", 0, $messages_count);
+    $message_ids = Storage::lGetRange("messages_to_uid:$uid", 0, $messages_count);
     return $message_ids;
 }
 
@@ -70,7 +70,7 @@ function clear_message($uid, $msg_id)
 function clear_uid($uid)
 {
     $messages_count = Storage::lLen("messages_to_uid:$uid");
-    $message_ids = Storage::lGetRage("messages_to_uid:$uid", 0, $messages_count);
+    $message_ids = Storage::lGetRange("messages_to_uid:$uid", 0, $messages_count);
     foreach ($message_ids as $message_id)
     {
         Storage::del("msg:$message_id");
