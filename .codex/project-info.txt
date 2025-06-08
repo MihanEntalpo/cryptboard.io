@@ -1,0 +1,3 @@
+The CryptBoard.io application runs on PHP and uses Redis for data storage. It also relies on browser-based JavaScript for client-side functionality. No Node.js or `npm` tooling is required.
+
+PHP syntax linting (`php -l`) is used as the main check to verify code correctness.
