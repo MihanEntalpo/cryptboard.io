@@ -116,9 +116,9 @@ class Storage
      * @param int $end End index
      * @return array Decoded list elements
      */
-    public static function lGetRange($list_key, $start, $end)
+    public static function lRange($list_key, $start, $end)
     {
-        return self::decodeArray(self::$r->lGetRange($list_key, $start, $end));
+        return self::decodeArray(self::$r->lRange($list_key, $start, $end));
 
     }
     

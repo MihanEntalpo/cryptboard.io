@@ -137,12 +137,12 @@ class Router
             }
             catch(ApiException $e)
             {
-                header("Content-type: application/json");
-                echo json_encode([
-                    "data"=>false,
-                    "error"=>$e::$name,
-                    "message"=>$e->getMessage()
-                ]);
+                echo_error($e::$name, $e->getMessage());
+                return;
+            }
+            catch(\Throwable $e)
+            {
+                echo_error("internal_error", $e->getMessage());
                 return;
             }
             
