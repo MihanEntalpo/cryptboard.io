@@ -3843,7 +3843,7 @@ var lib = {
                    {
                            var parent = $(obj).closest('div.box-modal');
                            if (parent.length===0) return null;
-                           for(i in parent)
+                           for (var i in parent)
                            {
                                    if (i==parseInt(i))
                                    {
@@ -3873,7 +3873,7 @@ var lib = {
            lock: function(modalObj)
            {
                    var elements = $(modalObj).find('button,input,textarea,select');
-                   for (i in elements)
+                   for (var i in elements)
                    {
                            if (parseInt(i)==i)
                            {
