@@ -113,15 +113,27 @@ function echo_json($data)
 
 }
 
-function echo_error($error, $message)
+function echo_error($error, $message, $code=500)
 {
-    http_response_code(500);
+    http_response_code($code);
     header("Content-type: application/json");
     echo json_encode([
         "data" => false,
         "error" => $error,
         "message" => $message,
     ]);
+}
+
+function md5_file_or_skip($filename)
+{
+    if (file_exists($filename))
+    {
+        return md5_file($filename);
+    }
+    else
+    {
+        return "";
+    }
 }
 
 function get_conf($variable, $default=null)

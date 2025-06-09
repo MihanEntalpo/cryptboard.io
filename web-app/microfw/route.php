@@ -137,7 +137,7 @@ class Router
             }
             catch(ApiException $e)
             {
-                echo_error($e::$name, $e->getMessage());
+                echo_error($e::$name, $e->getMessage(), 200);
                 return;
             }
             catch(\Throwable $e)
