@@ -1450,7 +1450,7 @@ var lib = {
                 });
 
                 var url = window.location.origin 
-                            + "/add-key?" + params_str;
+                            + "/add-key#" + params_str;
                 
                 var qrcode = new VanillaQR({
                     url: url,
@@ -1671,7 +1671,9 @@ var lib = {
                     return lib.storage.get("add_send_all_keys", lib.ui.is_mobile()).then(function(add_send_all_keys){
                         $('#add_send_my_key').prop("checked", !!add_key_back);
                         $('#add_send_all_keys').prop("checked", !!add_send_all_keys);
-                        var params = lib.tools.deparam(window.location.search.replace("?", ""));
+                        var hash_params = window.location.hash.replace(/^#/, "");
+                        var search_params = window.location.search.replace(/^\?/, "");
+                        var params = lib.tools.deparam(hash_params || search_params);
                         if (params['uid'])
                         {
                             params['uid'] = params['uid'].replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
