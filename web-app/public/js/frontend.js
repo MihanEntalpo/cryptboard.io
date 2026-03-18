@@ -2862,9 +2862,7 @@ var lib = {
                 });
             });
         },
-        auto_check_refresh_auth: new IntervalCaller(function(){
-            return lib.ajax.check_refresh_auth();
-        }, lib.conf.refresh_auth_interval_ms(), "lib.ajax.auto_check_refresh_auth", true)        
+        auto_check_refresh_auth: null
     },
     receivers: {
         get_receiver: function(uid, auto_add) {
@@ -3111,16 +3109,7 @@ var lib = {
                 return lib.msg.delete(ids);
             });
         },
-        auto_checker_msg: new IntervalCaller(function(){
-            Locker.get("check_new_and_draw").with_lock(function(){
-                return lib.msg.check_new_and_draw().catch(function(err){
-                    if (err !== "check_new already in progress")
-                    {
-                        throw err;
-                    }
-                });
-            });
-        }, lib.conf.receive_interval_ms(), "lib.msg.new_auto_checker", true),
+        auto_checker_msg: null,
         send_raw: function(raw_payload, uids){
             return lib.receivers.load_all_receivers(uids).then(function(receivers) {
                 
@@ -3967,6 +3956,22 @@ var lib = {
 
     }
 };
+
+lib.ajax.auto_check_refresh_auth = new IntervalCaller(function(){
+    return lib.ajax.check_refresh_auth();
+}, lib.conf.refresh_auth_interval_ms(), "lib.ajax.auto_check_refresh_auth", true);
+
+lib.msg.auto_checker_msg = new IntervalCaller(function(){
+    return Locker.get("check_new_and_draw").with_lock(function(){
+        return lib.msg.check_new_and_draw().catch(function(err){
+            if (err !== "check_new already in progress")
+            {
+                throw err;
+            }
+        });
+    });
+}, lib.conf.receive_interval_ms(), "lib.msg.new_auto_checker", true);
+
 
 $(function(){
     lib.log.info("core.init");
