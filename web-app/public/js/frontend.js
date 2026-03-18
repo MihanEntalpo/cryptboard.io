@@ -1,6 +1,35 @@
 /**
  * Main application code goes here
  */
+function getFrontendConf(key, fallback) {
+    var conf = (typeof window !== "undefined" && window.APP_CONF && typeof window.APP_CONF === "object")
+        ? window.APP_CONF
+        : {};
+
+    if (!key) {
+        return conf;
+    }
+
+    var keys = key.split('.');
+    var current = conf;
+
+    for (var i = 0; i < keys.length; i++) {
+        var currentKey = keys[i];
+        if (!current || typeof current !== "object" || !Object.prototype.hasOwnProperty.call(current, currentKey)) {
+            console.warn("conf " + key + " not found, using fallback to default", fallback);
+            return fallback;
+        }
+        current = current[currentKey];
+    }
+
+    if (current === undefined) {
+        console.warn("conf " + key + " not found, using fallback to default", fallback);
+        return fallback;
+    }
+
+    return current;
+}
+
 var lib = {
     /**
      * Current version of code. If it differs from stored value, session would be cleared and restarted
@@ -14,7 +43,19 @@ var lib = {
         //Size of RSA key. Too large value make generation of key very long, and QR-code too complicated.
         key_size: function() { return 1024; },
         //Second after thich keys would expire (in localstorage)
-        expire_delta_sec: function() { return 24 * 3600 * 31; }
+        expire_delta_sec: function() { return getFrontendConf("storage.ttl_seconds", 24 * 3600 * 31); },
+        //Auto move ajax queue checker interval
+        ajax_queue_auto_move_interval_ms: function() { return getFrontendConf("polling.queue_auto_move_interval_ms", 500); },
+        //Auto move ajax queue checker stale threshold
+        ajax_queue_inactivity_threshold_ms: function() { return getFrontendConf("polling.queue_inactivity_threshold_ms", 2000); },
+        //Refresh/auth checker interval
+        refresh_auth_interval_ms: function() { return getFrontendConf("polling.refresh_auth_interval_ms", 30000); },
+        //Receive/check messages interval
+        receive_interval_ms: function() { return getFrontendConf("polling.receive_interval_ms", 2000); },
+        //Default storage TTL in seconds, with JS fallback when env.js is missing
+        storage_ttl_seconds: function() { return getFrontendConf("storage.ttl_seconds", 24 * 3600 * 31); },
+        //Disable expiration for browser storage entries
+        storage_no_expire: function() { return getFrontendConf("storage.no_expire", false); }
     },
     core: {
         // Application main init function
@@ -2458,7 +2499,12 @@ var lib = {
             
         },
         set_local: function (key, value, expire_timeout){
-            if (expire_timeout)
+            if (expire_timeout === undefined || expire_timeout === null)
+            {
+                expire_timeout = lib.conf.storage_no_expire() ? null : lib.conf.storage_ttl_seconds();
+            }
+
+            if (expire_timeout !== null && expire_timeout !== false)
             {
                 var expire = lib.date.timestamp() + expire_timeout;
             }
@@ -2474,7 +2520,12 @@ var lib = {
         },
         set: function(key, value, expire_timeout)
         {
-            if (expire_timeout)
+            if (expire_timeout === undefined || expire_timeout === null)
+            {
+                expire_timeout = lib.conf.storage_no_expire() ? null : lib.conf.storage_ttl_seconds();
+            }
+
+            if (expire_timeout !== null && expire_timeout !== false)
             {
                 var expire = lib.date.timestamp() + expire_timeout;
             }
@@ -2580,7 +2631,7 @@ var lib = {
         queue: [],
         last_queue_move: 0,
         init_queue_auto_move: function(){
-            lib.ajax.queue_auto_move_interval = setInterval(lib.ajax.queue_auto_move, 500);
+            lib.ajax.queue_auto_move_interval = setInterval(lib.ajax.queue_auto_move, lib.conf.ajax_queue_auto_move_interval_ms());
         },
         queue_auto_move_interval: null,
         call: function(method, url, data){
@@ -2671,7 +2722,7 @@ var lib = {
             }, helpers.reject_handler);
         },
         queue_auto_move: function(){
-            if (lib.date.timestamp() - lib.ajax.last_queue_move > 2000)
+            if ((lib.date.timestamp() - lib.ajax.last_queue_move) * 1000 > lib.conf.ajax_queue_inactivity_threshold_ms())
             {
                 lib.ajax.move_queue();
             }
@@ -2813,7 +2864,7 @@ var lib = {
         },
         auto_check_refresh_auth: new IntervalCaller(function(){
             return lib.ajax.check_refresh_auth();
-        }, 30000, "lib.ajax.auto_check_refresh_auth", true)        
+        }, lib.conf.refresh_auth_interval_ms(), "lib.ajax.auto_check_refresh_auth", true)        
     },
     receivers: {
         get_receiver: function(uid, auto_add) {
@@ -3069,7 +3120,7 @@ var lib = {
                     }
                 });
             });
-        }, 2000, "lib.msg.new_auto_checker", true),
+        }, lib.conf.receive_interval_ms(), "lib.msg.new_auto_checker", true),
         send_raw: function(raw_payload, uids){
             return lib.receivers.load_all_receivers(uids).then(function(receivers) {
                 
