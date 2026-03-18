@@ -81,6 +81,33 @@ Router::add("/api/jwt-pub-key", function(){
     echo_json(["jwt_public_key"=>get_conf("JWT_PUBLIC_KEY")]);
 });
 
+Router::add("/js/env.js", function(){
+    header("Content-Type: application/javascript; charset=UTF-8");
+
+    $app_conf = [
+        "polling" => [
+            "receive_list_interval_ms" => (int)get_conf("FRONTEND_POLL_RECEIVE_LIST_MS", 1000),
+            "receive_interval_ms" => (int)get_conf("FRONTEND_POLL_RECEIVE_MS", 2000),
+            "refresh_auth_interval_ms" => (int)get_conf("FRONTEND_POLL_REFRESH_AUTH_MS", 15000),
+        ],
+        "storage" => [
+            "no_expire" => (bool)get_conf("FRONTEND_NO_EXPIRE", false),
+            "ttl_seconds" => (int)get_conf("FRONTEND_TTL_SECONDS", 2678400),
+        ],
+        "debug" => [
+            "js" => (bool)get_conf("JS_DEBUG", false),
+            "ajax" => (bool)get_conf("FRONTEND_AJAX_DEBUG", false),
+            "messages" => (bool)get_conf("FRONTEND_MESSAGES_DEBUG", false),
+            "files" => (bool)get_conf("FRONTEND_FILES_DEBUG", false),
+        ],
+    ];
+
+    echo "window.APP_CONF = " . json_encode(
+        $app_conf,
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    ) . ";\n";
+}, ["GET"]);
+
 Router::add("/api/icons", function(){
     echo render("icons", [], "default");
 });
