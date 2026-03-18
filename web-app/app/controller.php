@@ -81,7 +81,7 @@ Router::add("/api/jwt-pub-key", function(){
     echo_json(["jwt_public_key"=>get_conf("JWT_PUBLIC_KEY")]);
 });
 
-Router::add("/js/env.js", function(){
+Router::add(["pattern"=>"#^/js/env\.js(\?.*)?#", "type"=>"regexp"], function(){
     header("Content-Type: application/javascript; charset=UTF-8");
 
     $app_conf = [
