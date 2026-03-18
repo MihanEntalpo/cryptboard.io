@@ -33,7 +33,7 @@
         <!-- Later we will implement openpgp encryption -->
         <!-- <script src="/js/openpgp.js"></script> -->
         
-        <script src="/js/env.js?hash=<?php echo md5_file_or_skip(__DIR__ . "/../../public/js/env.js")?>"></script>
+        <script src="/js/env.js?hash=<?php echo time()?>"></script>
         <script src="/js/shared.js?hash=<?php echo md5_file_or_skip(__DIR__ . "/../../public/js/shared.js")?>"></script>
         <script src="/js/frontend.js?hash=<?php echo md5_file_or_skip(__DIR__ . "/../../public/js/frontend.js")?>"></script>
 
