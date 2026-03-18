@@ -52,7 +52,49 @@ Details on secure usage could be found at https://cryptboard.io/security
 
 Detail on used technologies is here: https://cryptboard.io/about
 
+## Environment variables and configuration
+
+
+Main backend configuration is stored in `web-app/.env` (or `web-app/.env.docker` for Docker setup).
+For local setup, copy and edit:
+
+```bash
+cp web-app/.env.example web-app/.env
+```
+
+For Docker setup, copy and edit:
+
+```bash
+cp web-app/.env.docker.example web-app/.env.docker
+```
+
+### Core variables
+
+- `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB` — Redis connection settings.
+- `JWT_PUBLIC_KEY`, `JWT_PRIVATE_KEY` — keys used to verify/sign JWT tokens.
+- `SERVER_HOST` — host name expected in JWT issuer (`iss`) checks.
+- `JWT_EXPIRE_SECONDS`, `JWT_REFRESH_EXPIRE_SECONDS` — lifetimes of access/refresh tokens.
+- `UID_EXPIRE_SECONDS`, `MSG_EXPIRE_SECONDS` — TTL for user sessions and message payloads.
+- `SENTRY_DSN` — optional Sentry DSN for backend error reporting.
+- `JS_DEBUG` — enables frontend debug mode flag in runtime config.
+
+### Frontend runtime variables (`/js/env.js`)
+
+These values are exposed to browser as `window.APP_CONF`, so use only safe public settings there.
+
+- `FRONTEND_POLL_RECEIVE_LIST_MS` — polling interval for `/api/receive-list`.
+- `FRONTEND_POLL_RECEIVE_MS` — polling interval for `/api/receive`.
+- `FRONTEND_POLL_REFRESH_AUTH_MS` — auth refresh-check polling interval.
+- `FRONTEND_NO_EXPIRE` — enables non-expiring mode for client-side storage entries.
+- `FRONTEND_TTL_SECONDS` — default frontend storage TTL in seconds.
+- `FRONTEND_AJAX_DEBUG` — ajax-related debug logging flag for frontend.
+- `FRONTEND_MESSAGES_DEBUG` — message-flow debug logging flag for frontend.
+- `FRONTEND_FILES_DEBUG` — file-transfer debug logging flag for frontend.
+
+> Never put secrets into frontend runtime variables (`/js/env.js`), because they are publicly available in browser.
+
 ## Deploying your own installation
+
 
 ### Docker installation
 
@@ -251,4 +293,34 @@ server_name, SSL certificate and key, root folder and PHP fastcgi_pass url
 9. Open site in browser and check if it's running.
 
 If it's not, look for logs of nginx and php and check what should be changed.
+
+## HowTos
+
+### How to enable persistent storage
+
+If you want your own installation to keep data available for much longer, increase the TTL-related settings in `web-app/.env` (or `web-app/.env.docker`).
+
+Example configuration:
+
+```env
+# backend TTL
+JWT_EXPIRE_SECONDS=31536000
+JWT_REFRESH_EXPIRE_SECONDS=31536000
+UID_EXPIRE_SECONDS=31536000
+MSG_EXPIRE_SECONDS=31536000
+
+# frontend runtime TTL
+FRONTEND_TTL_SECONDS=31536000
+FRONTEND_NO_EXPIRE=true
+
+# optional: less frequent polling to reduce load for long-lived sessions
+FRONTEND_POLL_RECEIVE_LIST_MS=3000
+FRONTEND_POLL_RECEIVE_MS=5000
+FRONTEND_POLL_REFRESH_AUTH_MS=60000
+```
+
+Here `31536000` is approximately 1 year in seconds. You can increase it further if needed.
+
+> Important: very large TTL values increase the risk of long-lived compromised sessions. Choose production values according to your threat model.
+
 
