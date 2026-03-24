@@ -12,6 +12,87 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
+var i18n = {
+    storage_key: 'language',
+    cookie_key: 'lang',
+    get_available_languages: function() {
+        return window.TR_LANGUAGES || [];
+    },
+    normalize_locale: function(locale) {
+        return (locale || 'en-us').toLowerCase().replace(/_/g, '-');
+    },
+    get_locale: function() {
+        return i18n.normalize_locale(window.TR_LOCALE || 'en-us');
+    },
+    get_dict: function(locale) {
+        var dicts = window.TR || {};
+        var current = i18n.normalize_locale(locale || i18n.get_locale());
+        return dicts[current] || dicts['en-us'] || {};
+    },
+    translate: function(key) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        var dict = i18n.get_dict();
+        var text = Object.prototype.hasOwnProperty.call(dict, key) ? dict[key] : key;
+        args.forEach(function(arg) {
+            text = text.replace('%%', arg);
+        });
+        return text;
+    },
+    apply_to_text: function(text) {
+        if (!text || typeof text !== 'string') {
+            return text;
+        }
+        return text.replace(/\{([^{}]+)\}/g, function(match, key) {
+            return i18n.translate(key);
+        });
+    },
+    translate_dom: function(root) {
+        var walker = document.createTreeWalker(root || document.body, NodeFilter.SHOW_TEXT, null);
+        var nodes = [];
+        while (walker.nextNode()) {
+            nodes.push(walker.currentNode);
+        }
+        nodes.forEach(function(node) {
+            if (node.parentNode && ['SCRIPT', 'STYLE'].indexOf(node.parentNode.nodeName) !== -1) {
+                return;
+            }
+            node.textContent = i18n.apply_to_text(node.textContent);
+        });
+        var attrs = ['title', 'placeholder', 'aria-label', 'aria-title'];
+        document.querySelectorAll('*').forEach(function(el) {
+            attrs.forEach(function(attr) {
+                if (el.hasAttribute(attr)) {
+                    el.setAttribute(attr, i18n.apply_to_text(el.getAttribute(attr)));
+                }
+            });
+        });
+        document.documentElement.lang = i18n.get_locale();
+        document.title = i18n.apply_to_text(document.title);
+    },
+    persist_locale: function(locale) {
+        var normalized = i18n.normalize_locale(locale);
+        try {
+            if (window.lib && lib.storage && lib.storage.set_local) {
+                lib.storage.set_local(i18n.storage_key, normalized, null);
+            } else {
+                localStorage.setItem(i18n.storage_key, JSON.stringify({data: normalized, expire: 'never'}));
+            }
+        } catch (e) {
+            localStorage.setItem(i18n.storage_key, normalized);
+        }
+        document.cookie = i18n.cookie_key + '=' + encodeURIComponent(normalized) + ';path=/;max-age=31536000;samesite=lax';
+        window.TR_LOCALE = normalized;
+        return normalized;
+    }
+};
+
+function tr(key) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return i18n.translate.apply(i18n, [key].concat(args));
+}
+
+
 var helpers = {
     /**
      * Wrapper what make a promise-returning function out of any function
@@ -755,5 +836,4 @@ class InterTabLock {
         if (this.debug) console.log("this.on_you_can_take_lock_handler(", data, ")");
     }
 }
-
 

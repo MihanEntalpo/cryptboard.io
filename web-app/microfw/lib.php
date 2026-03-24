@@ -46,16 +46,13 @@ function render($template, $vars=[], $layout=null, $context=null)
 {
     static $last_context = NULL;
     
-    if ($context)
+    if (!is_null($context))
     {
-        if (is_null($last_context))
-        {
-            $last_context = $context;
-        }
+        $last_context = $context;
     }
     else
     {
-        $context = $last_context;
+        $context = $last_context ?? [];
     }
     
     $rendered = ob(function() use ($vars, $template, $context) {
@@ -205,4 +202,3 @@ function get_conf($variable, $default=null)
     
     return $res;
 }
-

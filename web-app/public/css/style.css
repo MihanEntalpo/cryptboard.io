@@ -3,6 +3,18 @@ main
     margin-top: 64px;
 }
 
+.language-selector .dropdown-menu
+{
+    min-width: 10rem;
+}
+
+.language-selector .dropdown-item.active,
+.language-selector .dropdown-item:active
+{
+    background-color: #0d6efd;
+    color: white;
+}
+
 #init-popover
 {
     z-index: 9000;
