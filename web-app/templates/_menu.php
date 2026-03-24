@@ -2,36 +2,41 @@
     <div class="container-fluid">
         <a class="navbar-brand" href="/">CryptBoard.io</a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{Toggle navigation}">
             <span class="navbar-toggler-icon"></span>
           </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto">
             <li class="nav-item">
-              <a class="nav-link" href="/share-key" data-tab="share-key">Share key</a>
+              <a class="nav-link" href="/share-key" data-tab="share-key">{Share key}</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/clipboard" data-tab="clipboard">Clipboard</a>
+              <a class="nav-link" href="/clipboard" data-tab="clipboard">{Clipboard}</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/add-key" data-tab="add-key">Add key</a>
+              <a class="nav-link" href="/add-key" data-tab="add-key">{Add key}</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/about" data-tab="about">About</a>
+              <a class="nav-link" href="/about" data-tab="about">{About}</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/security" data-tab="security">Security</a>
+              <a class="nav-link" href="/security" data-tab="security">{Security}</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="https://github.com/MihanEntalpo/cryptboard.io">Deploy your own server</a>
+              <a class="nav-link" href="https://github.com/MihanEntalpo/cryptboard.io">{Deploy your own server}</a>
             </li>
           </ul> 
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right align-items-lg-center">
+                <li class="nav-item dropdown language-selector">
+                    <a class="nav-link dropdown-toggle" href="#" id="language-selector" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="{Language}">
+                        <i class='fa fa-globe'></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" id="language-selector-menu" aria-labelledby="language-selector"></ul>
+                </li>
                 <li class="nav-item active">
-                    <a class="nav-link" id="self-destruct" href="/" title='Kill session and start new' onclick='lib.client.kill_session()'><i class='fa fa-skull-crossbones'></i></a>
+                    <a class="nav-link" id="self-destruct" href="/" title='{Kill session and start new}' onclick='lib.client.kill_session()'><i class='fa fa-skull-crossbones'></i></a>
                   </li>
-
             </ul>
         </div>
     </div>

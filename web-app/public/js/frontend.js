@@ -63,6 +63,7 @@ var lib = {
             
             lib.broadcast.init();
             lib.core.set_default_broadcast_listeners();
+            lib.ui.language.init();
             lib.sw.init();
             
             var keys_was_generated = false;
@@ -90,7 +91,7 @@ var lib = {
                     }).catch(function(err){
                         lib.ui.popover.set_li_icon("auth", "fa-exclamation-triangle"); 
                         console.error(err);
-                        lib.modal.alert("Auth Error", "Inital authentication failed! Page would be reloaded", function(){
+                        lib.modal.alert(tr("Auth Error"), tr("Initial authentication failed! Page will be reloaded"), function(){
                             window.location.reload();
                         });
                     }).then(function(){
@@ -101,8 +102,8 @@ var lib = {
                     lib.ui.popover.set_li_icon("get-lock", "fa-exclamation-triangle");   
                 })
             ]).then(function(){
-                $("#key-status").text("Your keys are generated");
-                $("#key-status-info").text("Now, you can share public key with other user");
+                $("#key-status").text(tr("Your keys are generated"));
+                $("#key-status-info").text(tr("Now, you can share public key with other user"));
 
             }, helpers.reject_handler).then(function(){
                 $('#init-popover li[name=done] > .icon').html("<i class='fa fa-check-square'></i>");
@@ -138,7 +139,7 @@ var lib = {
                 if (lib.core.is_version_changed())
                 {
                     lib.modal.confirm(
-                        "Version is changed", "Version is changed, need to reset all data and start again. Press OK",
+                        tr("Version is changed"), tr("Version is changed, need to reset all data and start again. Press OK"),
                         function(){
                             lib.storage.set_local("lib_version", lib.current_version);
                             lib.client.kill_session();
@@ -255,7 +256,7 @@ var lib = {
         on_success: function(e){
             console.log(e.trigger);
             var prev_title = $(e.trigger).attr('title');
-            $(e.trigger).attr("title", "Copied to clipboard");
+            $(e.trigger).attr("title", tr("Copied to clipboard"));
             $(e.trigger).tooltip({
                 container: 'body',
                 html: true,
@@ -292,7 +293,7 @@ var lib = {
             }
             else
             {
-                alert("serviceWorker is not supported in your browser");
+                alert(tr("serviceWorker is not supported in your browser"));
             }
         }
     },
@@ -480,6 +481,32 @@ var lib = {
             }
             return false;
         },
+        language: {
+            init: function() {
+                var menu = $('#language-selector-menu');
+                if (!menu.length) {
+                    return;
+                }
+                menu.empty();
+                (i18n.get_available_languages() || []).forEach(function(language) {
+                    var item = $('<li><a class="dropdown-item" href="#"></a></li>');
+                    item.find('a')
+                        .text(language.title)
+                        .toggleClass('active', i18n.get_locale() === language.code)
+                        .attr('data-lang', language.code)
+                        .on('click', function(event) {
+                            event.preventDefault();
+                            lib.ui.language.change(language.code);
+                        });
+                    menu.append(item);
+                });
+            },
+            change: function(locale) {
+                var normalized = i18n.persist_locale(locale);
+                lib.broadcast.post("reload_page", {"reason": "language_changed", "locale": normalized});
+                window.location.reload();
+            }
+        },
         popover: {
             set_li_icon: function(li_name, icon_classes)
             {
@@ -550,7 +577,7 @@ var lib = {
                 on_success: function(e){
                     console.log(e.trigger);
                     var prev_title = $(e.trigger).attr('title');
-                    $(e.trigger).attr("title", "All text copied to clipboard");
+                    $(e.trigger).attr("title", tr("All text copied to clipboard"));
                     $(e.trigger).tooltip({
                         container: 'body',
                         html: true,
@@ -570,7 +597,7 @@ var lib = {
                 },
                 on_error: function(event){
                     $('#single-copy-button').hide();
-                    lib.modal.alert("Copy error", "Error on copying: " + lib.tools.toJson(event));
+                    lib.modal.alert(tr("Copy error"), tr("Error on copying: %%", lib.tools.toJson(event)));
                 }
             },
             copy_button_hide: function(){
@@ -631,12 +658,12 @@ var lib = {
                 }
             },
             delete: function(msg_ids) {
-                lib.modal.confirm("Delete message", "You are going to delete message", function(){
+                lib.modal.confirm(tr("Delete message"), tr("You are going to delete message"), function(){
                     lib.msg.delete(msg_ids);
                 });
             },
             delete_all: function(){
-                lib.modal.confirm("Delete all messages", "Are your sure you want to delete all the messages?", function(){
+                lib.modal.confirm(tr("Delete all messages"), tr("Are you sure you want to delete all the messages?"), function(){
                     lib.msg.delete_all();
                 });
             },
@@ -668,7 +695,7 @@ var lib = {
                     
                     $('#text_to_send').val("");
                     
-                    lib.modal.alert("Error", "Error on send message: " + JSON.stringify(err));
+                    lib.modal.alert(tr("Error"), tr("Error on send message: %%", JSON.stringify(err)));
                     
                 });
             },
@@ -731,7 +758,7 @@ var lib = {
                 files.forEach(function(file){
                     
                     var file_too_large = file.size > lib.files.max_file_size;
-                    var file_too_large_message = "<div class='text-danger'>File too large. Max size is:" + lib.tools.num_with_spaces(lib.files.max_file_size) + " bytes</div>";
+                    var file_too_large_message = "<div class='text-danger'>" + tr("File too large. Max size is: %% bytes", lib.tools.num_with_spaces(lib.files.max_file_size)) + "</div>";
                     
                     file_lines.push(`
                     <tr data-num='${file.index}' class='file-row'>
@@ -745,19 +772,19 @@ var lib = {
                     </tr>` + (file_too_large ? "" :
                     `<tr data-num='${file.index}' class='textarea-row'>
                         <td colspan=2>
-                            <textarea class='file-comment' placeholder='File comment' data-num='${file.index}'></textarea>
+                            <textarea class='file-comment' placeholder='${tr("File comment")}' data-num='${file.index}'></textarea>
                         </td></tr>
                     `));
                 });
                 
-                var content = `Select files to send:<Br>
+                var content = `${tr("Select files to send:")}<Br>
                     <table class=files-select-table>
-                    <tr><th><input type=checkbox checked class='file-select-checkbox-all'></th><th>File</th></tr>
+                    <tr><th><input type=checkbox checked class='file-select-checkbox-all'></th><th>${tr("File")}</th></tr>
                     ${file_lines.join("\n")}
                     </table>
                 `;
                 
-                var modal = lib.modal.confirm("Send files", content, function(){
+                var modal = lib.modal.confirm(tr("Send files"), content, function(){
                     var files_to_send = [];
                     files.forEach(function(file){
                         var index = file.index;
@@ -792,7 +819,7 @@ var lib = {
             types: {
                 "unknown": {
                     "icon": "fa-question-circle",
-                    "title": "Unsupported message type",
+                    "title": tr("Unsupported message type"),
                     "renderer": false,
                     "parse_payload": helpers.make_promise(
                         function(msg, payload) {
@@ -803,7 +830,7 @@ var lib = {
                 },
                 "test": {
                     "icon": "fa-stethoscope",
-                    "title": "Testing (debug) message",
+                    "title": tr("Testing (debug) message"),
                     "renderer": false,
                     "parse_payload": helpers.make_promise(
                         function(msg, payload) {
@@ -816,7 +843,7 @@ var lib = {
                 },
                 "text": {
                     "icon": "fa-comment",
-                    "title": "Text message",
+                    "title": tr("Text message"),
                     "renderer": function(msg){
                         return Promise.resolve(`
                             <div class='msg-content'>
@@ -835,7 +862,7 @@ var lib = {
                 },
                 "file": {
                     "icon": "fa-file-alt",
-                    "title": "File attachment",
+                    "title": tr("File attachment"),
                     "renderer": function(msg) {
                         var is_loaded = msg['data']['is_loaded'] || false;
                         var is_stalled = msg['data']['is_stalled'] || false;
@@ -854,7 +881,7 @@ var lib = {
                         if (is_loaded)
                         {
                             var btn_icon = "fa fa-download";
-                            var title = "Download file";
+                            var title = tr("Download file");
                             btn_color = "text-success";
                             btn_onclick = `lib.files.download_file("${msg.id}"); return false;`;
                             file_name_block = `<a href='#' onclick='${btn_onclick}'>${lib.tools.escape(msg.data.name)}</a>`;
@@ -862,22 +889,22 @@ var lib = {
                         else if (is_stalled)
                         {
                             var btn_icon = "fa fa-clock";
-                            var title = "File loading is stalled";
+                            var title = tr("File loading is stalled");
                         }
                         else if (is_cancelled)
                         {
                             var btn_icon = "fa fa-times";
-                            var title = "File loading is cancelled";
+                            var title = tr("File loading is cancelled");
                         }
                         else if (is_corrupted)
                         {
                             var btn_icon = "fa fa-times";
-                            var title = "File is corrupted";
+                            var title = tr("File is corrupted");
                         }
                         else
                         {
                             var btn_icon = "fa fa-circle-notch fa-spin";
-                            var title = "File is loading";
+                            var title = tr("File is loading");
                         }
                         
                         var percent = (bytes_loaded / msg['data']['transfer_size'] * 100).toFixed(2);
@@ -896,10 +923,10 @@ var lib = {
                                             <div class='file-text'>
                                                 <div class='file-text-content'>
                                                     <div class='file-name'>
-                                                    File ${file_name_block}<br>
+                                                    ${tr("File %%", file_name_block)}<br>
                                                     </div>
                                                     <div class='file-size'>
-                                                    size: ${lib.tools.escape(lib.tools.num_with_spaces(msg.data.size))} bytes (${percent}% loaded)
+                                                    ${tr("size: %% bytes (%% loaded)", lib.tools.escape(lib.tools.num_with_spaces(msg.data.size)), percent + "%")}
                                                     </div>
                                                 </div>
                                             </div>
@@ -944,7 +971,7 @@ var lib = {
                 },
                 "add": {
                     "icon": "fa-key",
-                    "title": "Add contact message",
+                    "title": tr("Add contact message"),
                     "parse_payload": function(msg, payload) {
 
                         return new Promise(function(resolve, reject){
@@ -992,7 +1019,7 @@ var lib = {
                                     var avatar = "";
                                 }
                                 var code = `<div class='key-msg-content'>
-                                        <b>Public key</b> from receiver ${avatar}<b>${msg.data.uid}</b>
+                                        ${tr("Public key from receiver %%", avatar + "<b>" + msg.data.uid + "</b>")}
                                     </div>`;
                                 resolve(code);
                             })
@@ -1001,7 +1028,7 @@ var lib = {
                 },
                 "image": {
                     "icon": "fa-image",
-                    "title": "Image file attachment",
+                    "title": tr("Image file attachment"),
                     "parse_payload": helpers.make_promise(
                         function(msg, payload) {
                             msg['data'] = {};
@@ -1011,7 +1038,7 @@ var lib = {
                 },
                 "audio": {
                     "icon": "fa-headphones",
-                    "title": "Audio file attachment",
+                    "title": tr("Audio file attachment"),
                     "parse_payload": helpers.make_promise(
                         function(msg, payload) {
                             msg['data'] = {};
@@ -1021,7 +1048,7 @@ var lib = {
                 },
                 "file_part": {
                     "icon": "fa-file-alt",
-                    "title": "File part",
+                    "title": tr("File part"),
                     "hidden": true,
                     "renderer": helpers.make_promise(function(msg) {
                         return `<div>${lib.tools.toJson(msg.data)}</div>`
@@ -1073,27 +1100,27 @@ var lib = {
                 "encrypted": {
                     "icon": "fa-lock",         
                     "color": "green",
-                    "title": "Message came encrypted. Server couldn&rsquo;t see it contents."
+                    "title": tr("Message came encrypted. Server couldn't see its contents.")
                 },
                 "unencrypted": {
                     "icon": "fa-lock-open",     
                     "color":"red",
-                    "title": "Message came unencrypted. Server saw it naked."
+                    "title": tr("Message came unencrypted. Server saw it naked.")
                 },
                 "broken": {
                     "icon": "fa-poop",  
                     "color":"brown",
-                    "title": "Message is broken or malformed"
+                    "title": tr("Message is broken or malformed")
                 }
             },
             "progress": {
                 "processing": {
                     "icon": "fa-cog fa-spin",
-                    "title": "Processing..."
+                    "title": tr("Processing...")
                 },
                 "done": {
                     "icon": "fa-check",
-                    "title": "Loaded"
+                    "title": tr("Loaded")
                 }
             },
             message_is_changed: function(msg_id){
@@ -1146,7 +1173,7 @@ var lib = {
                                 Name:<br>
                                 <div class="input-group mb-3">
                                     <input type="text" readonly class="form-control" id="receiver-name-field" name="receiver-name" value='${lib.tools.escape(receiver.name)}'>
-                                    <button class="btn btn-outline-secondary" title="Edit" type="button" onclick="lib.ui.receivers.on_rename_click(event, this, '${receiver.uid}')"><i class='fa fa-pen'></i></button>
+                                    <button class="btn btn-outline-secondary" title="${tr("Edit")}" type="button" onclick="lib.ui.receivers.on_rename_click(event, this, '${receiver.uid}')"><i class='fa fa-pen'></i></button>
                                 </div>
                             `;
                         }
@@ -1163,7 +1190,7 @@ var lib = {
                                         <div class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" id="receiver-send-field" ${receiver.data.send ? 'checked' : ''} 
                                                    onchange='lib.ui.receivers.on_send_check_changed(event, this, "${receiver.uid}")'>
-                                            <label class="form-check-label" for="receiver-send-field">Send messages</label>
+                                            <label class="form-check-label" for="receiver-send-field">${tr("Send messages")}</label>
                                         </div>
                                     </div>
                                     <div class='big-avatar'>${avatar}</div>
@@ -1181,7 +1208,7 @@ var lib = {
                 },
                 open: function(uid){
                     lib.ui.receivers.window.get_content(uid).then(function(content){
-                        lib.ui.receivers.window.current_modal = lib.modal.alert(`Receiver ${uid}`, content, function(){
+                        lib.ui.receivers.window.current_modal = lib.modal.alert(tr("Receiver %%", uid), content, function(){
                             lib.ui.receivers.window.current_modal = null;
                         });
                     }, helpers.reject_handler);
@@ -1210,7 +1237,7 @@ var lib = {
                 
                 var icon = `<div class=avatar onclick='lib.ui.receivers.window.open("${receiver.uid}");'>${lib.avatar.create_svg_by_number(avatar_number)}</div>`;
                 
-                var name = receiver.name || "Nameless";
+                var name = receiver.name || tr("Nameless");
                 var style = (existing === false) ? 'display:none' : '';
                 if (pencil)
                 {
@@ -1224,13 +1251,13 @@ var lib = {
                 if (send)
                 {
                     var send_toggle = `
-                        <i class='fa fa-check-square' title='Send to this receiver'></i>
+                        <i class='fa fa-check-square' title='${tr("Send to this receiver")}'></i>
                     `;
                 }
                 else
                 {
                     var send_toggle = `
-                        <i class='fa fa-check' title='Dont send to this receiver'></i>
+                        <i class='fa fa-check' title='${tr("Don't send to this receiver")}'></i>
                     `;
                 }
                 
@@ -1238,7 +1265,7 @@ var lib = {
                 var danger = !(receiver.public_key && receiver.public_key_valid);
                 var danger_css = danger ? "background-color: #fd6e0d; border-color: #fd6e0d; border-color: #feb786;" : "";
                 var send_toggle = `
-                    <div class='form-check form-switch' title='Send messages to this receiver?'>
+                    <div class='form-check form-switch' title='${tr("Send messages to this receiver?")}'>
                         <input type='checkbox' class='form-check-input' style='${danger_css}' id='send-check-${receiver.uid}' ${send_checked} onchange='lib.ui.receivers.on_send_check_changed(event, this, "${receiver.uid}")'>                        
                     </div>`;
                 
@@ -1253,7 +1280,7 @@ var lib = {
                 
                 if (!receiver.data.is_self)
                 {
-                    var delete_btn = `<div class='delete' title='Delete receiver' onclick='lib.ui.receivers.on_delete_click(event, this, "${receiver['uid']}")'><i class='fa fa-window-close'></i></div>`
+                    var delete_btn = `<div class='delete' title='${tr("Delete receiver")}' onclick='lib.ui.receivers.on_delete_click(event, this, "${receiver['uid']}")'><i class='fa fa-window-close'></i></div>`
                 }
                 else
                 {
@@ -1264,7 +1291,7 @@ var lib = {
                     <div class='receiver ${cls}' style="${style}" id="${receiver.uid}">
                         <div class='icon'>${icon}</div>
                         <div class='info'>
-                        <div class='name'>${lib.tools.escape(name)}<span class="edit-name" title='Rename receiver' onclick='lib.ui.receivers.on_rename_click(event, this, "${receiver['uid']}")'>${pencil_icon}</span></div>
+                        <div class='name'>${lib.tools.escape(name)}<span class="edit-name" title='${tr("Rename receiver")}' onclick='lib.ui.receivers.on_rename_click(event, this, "${receiver['uid']}")'>${pencil_icon}</span></div>
                         <div class='uid'>${receiver['uid']}</div>
                         </div>
                         <div class='buttons'>
@@ -1277,9 +1304,8 @@ var lib = {
             },
             on_delete_click: function(event, element, uid){
                 lib.modal.confirm(
-                    "Delete receiver?", 
-                    `Do you really want to delete receiver '${uid}'?<br> 
-                    You won't be able to send messages to it, but not receiving from it`,
+                    tr("Delete receiver?"), 
+                    tr("Do you really want to delete receiver '%%'?<br>You won't be able to send messages to it, but you will still receive from it", uid),
                     function(){
                         console.log("deleting receiver", uid);
                         lib.receivers.remove_receiver(uid);
@@ -1288,8 +1314,8 @@ var lib = {
             },
             on_rename_click: function(event, element, uid){
                 return lib.receivers.get_receiver(uid, true).then(function(receiver){
-                    var modal = lib.modal.confirm("Rename receiver", `
-                    Enter receiver name that you'd like:<br>
+                    var modal = lib.modal.confirm(tr("Rename receiver"), `
+                    ${tr("Enter receiver name that you'd like:")}<br>
                     <input type='text' id='receiver-name-editor' value='${lib.tools.escape(receiver.name, true)}'>
                     `, function(){
                         var new_name = $("#receiver-name-editor").val();
@@ -1308,8 +1334,8 @@ var lib = {
                         if (!receiver.public_key || !receiver.public_key_valid)
                         {
                             lib.modal.confirm(
-                                "Unprotected send!", 
-                                `<i class='fa fa-x2 fa-exclamation-triangle' class='red'></i>Receiver ${receiver_uid} doesn't have a public key.<br>Your message would be send unencrypted.<br> Are your sure you want to enable it?`,
+                                tr("Unprotected send!"), 
+                                `<i class='fa fa-x2 fa-exclamation-triangle' class='red'></i>${tr("Receiver %% doesn't have a public key.<br>Your message will be sent unencrypted.<br>Are you sure you want to enable it?", receiver_uid)}`,
                                 function(){
                                     $(element).prop("checked", true);
                                     receiver.data = $.extend(receiver.data || {}, {
@@ -1341,7 +1367,7 @@ var lib = {
         avatar: {
             large: function(el) {
                 var svg = $(el).find('svg').parent().html();
-                lib.modal.alert(`Avatar closer look`, "<div class='large-avatar'>" + svg + "</div>");
+                lib.modal.alert(tr("Avatar closer look"), "<div class='large-avatar'>" + svg + "</div>");
             }
         },
         html_blocks_cache: {},
@@ -1464,7 +1490,7 @@ var lib = {
                         $('#add_public_key').val("");
                         $('#add_name').val("");
                         $('#top-add-key-block .avatar').remove();
-                        lib.modal.alert('Key added', "Key successfully added", function(){
+                        lib.modal.alert(tr("Key added"), tr("Key successfully added"), function(){
                             
                             $('a[data-tab=clipboard]').trigger("click");                            
                             
@@ -1575,7 +1601,7 @@ var lib = {
                                 <div class='state'>${state_icon}</div>
                                 <div class='processing'>${progress_icon}</div>
                             </div>
-                            <div class='delete-button' title='Delete message' onclick='lib.ui.msg.delete(["${msg.id}"])'><i class='fa fa-times'></i></div>
+                            <div class='delete-button' title='${tr("Delete message")}' onclick='lib.ui.msg.delete(["${msg.id}"])'><i class='fa fa-times'></i></div>
                             ${msg_content}
                         </div>
                     `;
@@ -1721,7 +1747,7 @@ var lib = {
                             if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(params['uid']))
                             {
                                 $('#add_uid').val(params['uid']);
-                                $('#add_name').val("Nameless " + params['uid'].substring(0,4) + "..." + params['uid'].substring(params['uid'].length-5, params['uid'].length-1));
+                                $('#add_name').val(tr("Nameless") + " " + params['uid'].substring(0,4) + "..." + params['uid'].substring(params['uid'].length-5, params['uid'].length-1));
                             }
                         }
                         if (params['key'])
@@ -1820,7 +1846,7 @@ var lib = {
                     {
                         if (e.message.indexOf("Overload resolution failed") !== -1)
                         {
-                            lib.modal.alert("Error opening file", "It seems that file is too big to open in your browser");
+                            lib.modal.alert(tr("Error opening file"), tr("It seems that file is too big to open in your browser"));
                         }
                         else
                         {
@@ -1884,7 +1910,7 @@ var lib = {
                             msg += skip_causes[cause](file) + "<br>";
                         });
                     }
-                    lib.modal.alert("Some file couldn't be loaded", msg);
+                    lib.modal.alert(tr("Some file couldn't be loaded"), msg);
                 }
                 
                 $('#send_file_button').prop("disabled", false);
@@ -2591,7 +2617,7 @@ var lib = {
             }, helpers.reject_handler);
         },
         uid_changed: function(old_uid, new_uid){
-            lib.modal.alert("New UID", "Uid changed from " + old_uid + " to " + new_uid + "!<br>Receivers cleared.");
+            lib.modal.alert(tr("New UID"), tr("Uid changed from %% to %%!<br>Receivers cleared.", old_uid, new_uid));
             return lib.receivers.get_all_receivers().then(function(receivers){
                 var prs = [];
                 for (var receiver_uid in receivers){
@@ -3035,7 +3061,7 @@ var lib = {
             var icon = lib.avatar.create_svg_by_user(uid, public_key);
             var icon_div = "<div class='avatar'onclick='lib.ui.receivers.window.open(\"" + uid + "\");'>" + icon + "</div>";
 
-            name = name || "Nameless " + uid.substring(0,4) + "..." + uid.substring(uid.length-5, uid.length-1);
+            name = name || tr("Nameless") + " " + uid.substring(0,4) + "..." + uid.substring(uid.length-5, uid.length-1);
             data = data || {};
             data = $.extend({
                 "avatar_number": lib.avatar.get_number_by_user(uid, public_key),
@@ -3905,7 +3931,7 @@ var lib = {
            alert: function(title, contentHtml, closeCallback)
            {
                    if (title && (typeof contentHtml==='undefined')) {contentHtml = title; title='';}
-                   return lib.modal.open(title,contentHtml,null,null,closeCallback,null,"<button class='btn btn-primary cancel-button'>Ok</button><div style='clear:both;'></div>");
+                   return lib.modal.open(title,contentHtml,null,null,closeCallback,null,"<button class='btn btn-primary cancel-button'>" + tr("OK") + "</button><div style='clear:both;'></div>");
            },
            /**
             * Block all buttons and other form element on modal, remembeing old values
@@ -3946,8 +3972,8 @@ var lib = {
            confirm: function(title, contentHtml, okCallback, cancelCallback, okButtonName, cancelButtonName, closeOnOk)
            {
                    if (typeof closeOnOk ==='undefined')  closeOnOk = true;
-                   okButtonName = okButtonName || 'Ok';
-                   cancelButtonName = cancelButtonName || 'Cancel';
+                   okButtonName = okButtonName || tr("OK");
+                   cancelButtonName = cancelButtonName || tr("Cancel");
                    cancelCallback = cancelCallback || function(){};
                    var buttons = "<button class='btn btn-primary ok-button'>&nbsp;" + okButtonName + "&nbsp;</button><button class='btn btn-inverse cancel-button'>&nbsp;" + cancelButtonName + "&nbsp;</button><div style='clear:both;'></div>";
                    return lib.modal.open(title,contentHtml,function(event){okCallback(event);if(closeOnOk)lib.modal.close(event.target);},function(event){cancelCallback(event); lib.modal.close(event.target);},null,null,buttons);
@@ -3975,6 +4001,7 @@ lib.msg.auto_checker_msg = new IntervalCaller(function(){
 
 $(function(){
     lib.log.info("core.init");
+    i18n.translate_dom();
     lib.core.init();
     
 });

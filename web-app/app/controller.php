@@ -3,6 +3,7 @@
 require_once(__DIR__ . "/../microfw/main.php");
 
 require_once(__DIR__ . "/service.php");
+require_once(__DIR__ . "/languages.php");
 
 use Ramsey\Uuid\Uuid;
 
@@ -14,6 +15,40 @@ if (extension_loaded('newrelic')) {
 
 Storage::init();
 
+
+function get_page_lang() {
+    $supported = array_column(get_supported_languages(), "code");
+
+    $normalize = function($lang) {
+        return strtolower(str_replace('_', '-', trim((string)$lang)));
+    };
+
+    $candidates = [];
+    if (isset($_COOKIE['lang'])) {
+        $candidates[] = $_COOKIE['lang'];
+    }
+    if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+        foreach (explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']) as $part) {
+            $candidates[] = trim(explode(';', $part)[0]);
+        }
+    }
+
+    foreach ($candidates as $candidate) {
+        $candidate = $normalize($candidate);
+        if (in_array($candidate, $supported, true)) {
+            return $candidate;
+        }
+        foreach ($supported as $lang) {
+            if (explode('-', $lang)[0] === explode('-', $candidate)[0]) {
+                return $lang;
+            }
+        }
+    }
+
+    return 'en-us';
+}
+
+
 Router::addMiddleware(function(){
     $headers = get_nginx_headers();
     if (isset($headers['Authorization']))
@@ -23,6 +58,7 @@ Router::addMiddleware(function(){
 });
 
 $ssr_pages = ["about", "security", "clipboard", "share-key", "add-key"];
+$lang = get_page_lang();
 
 $meta_default = [
     "og_title" => "",
@@ -54,19 +90,20 @@ $meta_pages = array_map(function($meta_page) use ($meta_default) {
     ]
 ]);
 
-Router::add(["pattern" => "#^/(?P<page>" . join("|", $ssr_pages) . ")(^|[^a-zA-Z0-9_-])?#", "type"=>"regexp"], function($route) use ($meta_pages) {
+Router::add(["pattern" => "#^/(?P<page>" . join("|", $ssr_pages) . ")(^|[^a-zA-Z0-9_-])?#", "type"=>"regexp"], function($route) use ($meta_pages, $lang) {
    $page = $route['matches']['page'];
    echo render("_tabs_content", ["page"=>$page], "default", [
-       "meta"=>$meta_pages[$page]
+       "meta"=>$meta_pages[$page],
+       "lang"=>$lang
    ]); 
 });
 
-Router::add(["pattern" => "#^(/|index\.php\??)$#", "type"=>"regexp"], function(){
-   echo render("_tabs_content", ["page"=>"tabs"], "default");
+Router::add(["pattern" => "#^(/|index\.php\??)$#", "type"=>"regexp"], function() use ($lang){
+   echo render("_tabs_content", ["page"=>"tabs"], "default", ["lang"=>$lang]);
 });
 
-Router::add(["pattern"=> "#^/clipboard/?$#", "type"=>"regexp"], function(){
-   echo render("clipboard", ["page"=>"clipboard"], "default"); 
+Router::add(["pattern"=> "#^/clipboard/?$#", "type"=>"regexp"], function() use ($lang){
+   echo render("clipboard", ["page"=>"clipboard"], "default", ["lang"=>$lang]); 
 });
 
 Router::add("/api/uid", function(){
@@ -80,6 +117,15 @@ Router::add("/api/uid", function(){
 Router::add("/api/jwt-pub-key", function(){
     echo_json(["jwt_public_key"=>get_conf("JWT_PUBLIC_KEY")]);
 });
+
+Router::add(["pattern"=>"#^/js/translations/languages\.js(\?.*)?#", "type"=>"regexp"], function(){
+    header("Content-Type: application/javascript; charset=UTF-8");
+    echo "window.TR = window.TR || {};\n";
+    echo "window.TR_LANGUAGES = " . json_encode(
+        get_supported_languages(),
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    ) . ";\n";
+}, ["GET"]);
 
 Router::add(["pattern"=>"#^/js/env\.js(\?.*)?#", "type"=>"regexp"], function(){
     header("Content-Type: application/javascript; charset=UTF-8");

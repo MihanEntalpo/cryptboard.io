@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars($context['lang'] ?? 'en-us'); ?>">
     <head>
         
-        <title>CryptBoard.io - encrypted web clipboard and anonymous chat</title>
+        <title>{CryptBoard.io - encrypted web clipboard and anonymous chat}</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         
@@ -33,6 +33,78 @@
         <!-- Later we will implement openpgp encryption -->
         <!-- <script src="/js/openpgp.js"></script> -->
         
+
+        <script>
+        (function() {
+            window.TR = window.TR || {};
+            var storageKey = 'language';
+            var cookieKey = 'lang';
+            function normalize(code) {
+                return (code || '').toLowerCase().replace(/_/g, '-');
+            }
+            function readStored() {
+                try {
+                    var raw = window.localStorage.getItem(storageKey);
+                    if (!raw) { return ''; }
+                    var parsed = JSON.parse(raw);
+                    return normalize(parsed && parsed.data ? parsed.data : raw);
+                } catch (e) {
+                    return normalize(window.localStorage.getItem(storageKey));
+                }
+            }
+            function readCookie() {
+                var parts = document.cookie.split(';');
+                for (var i = 0; i < parts.length; i++) {
+                    var item = parts[i].trim();
+                    if (item.indexOf(cookieKey + '=') === 0) {
+                        return normalize(decodeURIComponent(item.substring(cookieKey.length + 1)));
+                    }
+                }
+                return '';
+            }
+            function browserLocale() {
+                var list = navigator.languages || [navigator.language || navigator.userLanguage || ''];
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i]) return normalize(list[i]);
+                }
+                return 'en-us';
+            }
+            function syncLoad(src) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', src, false);
+                xhr.send(null);
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    window.eval(xhr.responseText + "\n//# sourceURL=" + src);
+                    return true;
+                }
+                return false;
+            }
+            if (!syncLoad('/js/translations/languages.js')) {
+                return;
+            }
+            var available = window.TR_LANGUAGES || [];
+            var availableMap = {};
+            for (var i = 0; i < available.length; i++) {
+                availableMap[available[i].code] = true;
+            }
+            var chosen = readStored() || readCookie() || browserLocale();
+            if (!availableMap[chosen]) {
+                var short = chosen.split('-')[0];
+                for (var j = 0; j < available.length; j++) {
+                    if (available[j].code.split('-')[0] === short) {
+                        chosen = available[j].code;
+                        break;
+                    }
+                }
+            }
+            if (!availableMap[chosen]) {
+                chosen = 'en-us';
+            }
+            window.TR_LOCALE = chosen;
+            syncLoad('/js/translations/' + chosen + '.js');
+        })();
+        </script>
+
         <script src="/js/env.js?hash=<?php echo time()?>"></script>
         <script src="/js/shared.js?hash=<?php echo md5_file_or_skip(__DIR__ . "/../../public/js/shared.js")?>"></script>
         <script src="/js/frontend.js?hash=<?php echo md5_file_or_skip(__DIR__ . "/../../public/js/frontend.js")?>"></script>
