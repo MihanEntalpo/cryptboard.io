@@ -90,20 +90,24 @@ $meta_pages = array_map(function($meta_page) use ($meta_default) {
     ]
 ]);
 
-Router::add(["pattern" => "#^/(?P<page>" . join("|", $ssr_pages) . ")(^|[^a-zA-Z0-9_-])?#", "type"=>"regexp"], function($route) use ($meta_pages, $lang) {
+$page_context = function($lang, $meta=[]) use ($meta_default) {
+    return [
+        "lang" => $lang,
+        "meta" => array_merge($meta_default, $meta),
+    ];
+};
+
+Router::add(["pattern" => "#^/(?P<page>" . join("|", $ssr_pages) . ")(^|[^a-zA-Z0-9_-])?#", "type"=>"regexp"], function($route) use ($meta_pages, $lang, $page_context) {
    $page = $route['matches']['page'];
-   echo render("_tabs_content", ["page"=>$page], "default", [
-       "meta"=>$meta_pages[$page],
-       "lang"=>$lang
-   ]); 
+   echo render("_tabs_content", ["page"=>$page], "default", $page_context($lang, $meta_pages[$page])); 
 });
 
-Router::add(["pattern" => "#^(/|index\.php\??)$#", "type"=>"regexp"], function() use ($lang){
-   echo render("_tabs_content", ["page"=>"tabs"], "default", ["lang"=>$lang]);
+Router::add(["pattern" => "#^(/|index\.php\??)$#", "type"=>"regexp"], function() use ($lang, $page_context){
+   echo render("_tabs_content", ["page"=>"tabs"], "default", $page_context($lang));
 });
 
-Router::add(["pattern"=> "#^/clipboard/?$#", "type"=>"regexp"], function() use ($lang){
-   echo render("clipboard", ["page"=>"clipboard"], "default", ["lang"=>$lang]); 
+Router::add(["pattern"=> "#^/clipboard/?$#", "type"=>"regexp"], function() use ($lang, $page_context){
+   echo render("clipboard", ["page"=>"clipboard"], "default", $page_context($lang)); 
 });
 
 Router::add("/api/uid", function(){
@@ -154,8 +158,8 @@ Router::add(["pattern"=>"#^/js/env\.js(\?.*)?#", "type"=>"regexp"], function(){
     ) . ";\n";
 }, ["GET"]);
 
-Router::add("/api/icons", function(){
-    echo render("icons", [], "default");
+Router::add("/api/icons", function() use ($lang, $page_context){
+    echo render("icons", [], "default", $page_context($lang));
 });
 
 Router::add("/api/refresh", function(){

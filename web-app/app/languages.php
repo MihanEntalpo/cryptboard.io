@@ -11,6 +11,9 @@ function get_supported_languages()
             "code" => "ru-ru",
             "title" => "Русский",
         ],
+        [
+            "code" => "zh-cn",
+            "title" => "简体中文",
+        ],
     ];
 }
-

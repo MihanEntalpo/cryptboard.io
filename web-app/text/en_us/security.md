@@ -4,7 +4,7 @@
 
 * Data is encrypted on a client-side (in browser) and decrypted also on the client-side (and could be done only by the right receiver)
 * Data got transferred by a server in encrypted form and the server has no way to decrypt it
-* After data got read by a client, it's destroyed on server immidiatelly.
+* After data got read by a client, it's destroyed on server immediately.
 * Client has anonymous authorization on the server, no client information is used for it except the IP address (used to prevent DOS attacks)
 * Exchange of asymmetric public keys are happened by some third-party channel that you select
 
@@ -14,7 +14,7 @@
 * Hybrid encryption algorithm (RSA + AES) is used
 * Client generating asymmetrical RSA key pair (public + private) of 1024 bit (Size of key is limited to keep browser usability. On slow devices 2048 bit key could be generating for minute or so)
 * You are sharing your public key with another client by third-party channel such as:
-    * Some internet messanger
+    * Some internet messenger
     * By opening a QR-code using a mobile phone
     * Sending QR-code or link by a network storage
     * Sending by email
@@ -30,18 +30,18 @@
 
 ## How can I trust CryptBoard?
 
-* The application is intentionaly made very simple, JavaScript files are not minified and obfuscated, so you easily can see the code
+* The application is intentionally made very simple, JavaScript files are not minified and obfuscated, so you easily can see the code
 * Main application file <a href='/js/frontend.js' target=_blank>frontend.js</a> and some other small files are easy to analyse. Search by a "private" word on in allows to see all the places there something happening to a private key. 
 * Also in the future I'm planning to create some kind of "critical section" in code and move there all the work with keys, so it would be easier to analyze the code.
 * There are OpenSource libraries used for encryption/decryption, namely JSEncrypt and Forge. I'm not a professional cryptographist so, relying on third-party analysis of these libraries (later will add links to papers)
 * All the javascript modules are taken from official repositories and could be easily compared as specified in <a href='/about' class="simple">About</a>
 * You don't have to trust a backend server at all, because all the project is made with the thought that server could be compromised and still not having an ability to decrypt messages.
-* As source code is published, you can install your own server of cryptboard.io
+* Anyone can deploy a self-hosted CryptBoard server and control it independently.
 
 ## How to ensure maximum security using CryptBoard?
 
 * When adding a new receiver's key and uid, check the avatar image. If you adding your own second device - just look at avatars, they should be equal.
-* If you are adding other user's uid and key it's better to use voice call to manually describe what avatar you seeing and compare that your counterpart seeing the save. Avatar is generated based on sha256-hash of uid and public key, so any single-byte change leads to a completely different avatar.
+* If you are adding other user's uid and key it's better to use voice call to manually describe what avatar you seeing and compare that your counterpart seeing the same. Avatar is generated based on sha256-hash of uid and public key, so any single-byte change leads to a completely different avatar.
 * Also you can compare uid a public key itself, it's more complicated but also more secure
 * Do not send messages to receivers whose public key you do not have if you are unsure. By default this is disabled but can be switched on (with a warning). Receiver without public key has question mark instead of avatar. **Messages to such receivers are not being encrypted.**
 * After you finished working with the service clear all your data by using the "skull-and-bones" button on the upper panel (or in hamburger menu)
