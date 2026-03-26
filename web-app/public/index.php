@@ -1,8 +1,10 @@
 <?php
 
-ini_set("display_errors", "On");
-
 require_once(__DIR__ . "/../microfw/lib.php");
+
+$php_debug = (bool)get_conf("PHP_DEBUG", false);
+ini_set("display_errors", $php_debug ? "On" : "Off");
+ini_set("display_startup_errors", $php_debug ? "On" : "Off");
 
 set_error_handler(function($severity, $message, $file, $line) {
     if (!(error_reporting() & $severity)) {

@@ -76,6 +76,7 @@ cp web-app/.env.docker.example web-app/.env.docker
 - `JWT_EXPIRE_SECONDS`, `JWT_REFRESH_EXPIRE_SECONDS` — lifetimes of access/refresh tokens.
 - `UID_EXPIRE_SECONDS`, `MSG_EXPIRE_SECONDS` — TTL for user sessions and message payloads.
 - `SENTRY_DSN` — optional Sentry DSN for backend error reporting.
+- `PHP_DEBUG` — enables PHP `display_errors` and `display_startup_errors`.
 - `JS_DEBUG` — enables frontend debug mode flag in runtime config.
 
 ### Frontend runtime variables (`/js/env.js`)
@@ -322,5 +323,4 @@ FRONTEND_POLL_REFRESH_AUTH_MS=60000
 Here `31536000` is approximately 1 year in seconds. You can increase it further if needed.
 
 > Important: very large TTL values increase the risk of long-lived compromised sessions. Choose production values according to your threat model.
-
 

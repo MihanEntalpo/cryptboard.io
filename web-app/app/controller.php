@@ -277,6 +277,7 @@ Router::add("/api/receive-list", function(){
 });
 
 Router::add("/api/receive", function($route){
+    $uid = JWTH::auth_bearer($data);
    
     $msg_ids = post("msg_ids");
     
@@ -288,6 +289,22 @@ Router::add("/api/receive", function($route){
     $keys = array_map(function($x){return "msg:$x";}, $msg_ids);
     
     $msgs = Storage::mGet($keys);
+
+    foreach ($msgs as $msg)
+    {
+        if (!$msg)
+        {
+            continue;
+        }
+
+        $msg_from = $msg["from"] ?? null;
+        $msg_to = $msg["to"] ?? null;
+
+        if ($msg_from !== $uid && $msg_to !== $uid)
+        {
+            throw new AuthException("message access denied");
+        }
+    }
     
     return $msgs;
     
