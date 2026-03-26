@@ -110,6 +110,48 @@ main .tab.active
     overflow-wrap: break-word;
 }
 
+.messages
+{
+    min-height: 120px;
+}
+
+.messages.initial-loading
+{
+    display: none;
+}
+
+.messages-initial-loader
+{
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    padding: 24px 16px;
+    border: 1px dashed #cfd4da;
+    border-radius: 4px;
+    background: #fafafa;
+    color: #6c757d;
+}
+
+.messages-initial-loader.hidden
+{
+    display: none;
+}
+
+.messages-initial-loader-icon
+{
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.messages-initial-loader-text
+{
+    font-size: 1rem;
+}
+
 .receiver
 {
     background-color: #f9f9f9;
@@ -535,6 +577,31 @@ main .tab.active
     color: grey;
     overflow-wrap: break-word;
     word-break: break-all;
+}
+
+.image-content
+{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 100%;
+}
+
+.image-content .image-preview-link
+{
+    display: inline-block;
+    width: 100%;
+    max-width: 420px;
+}
+
+.image-content .image-preview
+{
+    display: block;
+    max-width: 100%;
+    max-height: 320px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    background: #f8f9fa;
 }
 
 table.files-select-table .file-size

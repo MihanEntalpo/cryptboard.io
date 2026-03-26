@@ -26,14 +26,19 @@
             <li class="nav-item">
               <a class="nav-link" href="https://github.com/MihanEntalpo/cryptboard.io">{Deploy your own server}</a>
             </li>
+            <li class="nav-item dropdown language-selector">
+                <a class="nav-link dropdown-toggle" href="#" id="language-selector" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="{Language}">
+                    <i class='fa fa-globe'></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" id="language-selector-menu" aria-labelledby="language-selector"></ul>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link" id="incoming-sound-toggle" href="#" title="{Incoming message sound is off}" aria-label="{Incoming message sound is off}" aria-pressed="false">
+                    <i class='fa fa-volume-mute'></i>
+                </a>
+            </li>
           </ul> 
             <ul class="nav navbar-nav navbar-right align-items-lg-center">
-                <li class="nav-item dropdown language-selector">
-                    <a class="nav-link dropdown-toggle" href="#" id="language-selector" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="{Language}">
-                        <i class='fa fa-globe'></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" id="language-selector-menu" aria-labelledby="language-selector"></ul>
-                </li>
                 <li class="nav-item active">
                     <a class="nav-link" id="self-destruct" href="/" title='{Kill session and start new}' onclick='lib.client.kill_session()'><i class='fa fa-skull-crossbones'></i></a>
                   </li>

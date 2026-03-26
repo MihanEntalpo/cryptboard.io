@@ -499,6 +499,10 @@ class Locker {
       }
     }
 
+    async try_lock() {
+      return this._tryLock();
+    }
+
 
 
     async with_lock(func) {
@@ -836,4 +840,3 @@ class InterTabLock {
         if (this.debug) console.log("this.on_you_can_take_lock_handler(", data, ")");
     }
 }
-

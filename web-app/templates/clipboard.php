@@ -51,6 +51,12 @@
               <input type="file"  style="display: none;" id="file-selector" multiple onchange="lib.ui.msg.send_file_selected(event, this)">
           </div>
       </div>
+      <div class="messages-initial-loader" id="messages-initial-loader" aria-live="polite">
+          <div class="messages-initial-loader-icon">
+              <i class="fa fa-circle-notch fa-spin" aria-hidden="true"></i>
+          </div>
+          <div class="messages-initial-loader-text"></div>
+      </div>
       <div class="messages">
           
       </div>      

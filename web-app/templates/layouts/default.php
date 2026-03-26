@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="<?php echo htmlspecialchars($context['lang'] ?? 'en-us'); ?>">
     <head>
+        <?php
+            $translation_assets_hash = md5(implode('|', [
+                md5(json_encode(get_supported_languages(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)),
+                md5_file_or_skip(__DIR__ . "/../../public/js/translations/en-us.js"),
+                md5_file_or_skip(__DIR__ . "/../../public/js/translations/ru-ru.js"),
+                md5_file_or_skip(__DIR__ . "/../../public/js/translations/zh-cn.js"),
+            ]));
+        ?>
         
         <title>{CryptBoard.io - encrypted web clipboard and anonymous chat}</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -79,7 +87,8 @@
                 }
                 return false;
             }
-            if (!syncLoad('/js/translations/languages.js')) {
+            var translationAssetsHash = <?php echo json_encode($translation_assets_hash); ?>;
+            if (!syncLoad('/js/translations/languages.js?hash=' + translationAssetsHash)) {
                 return;
             }
             var available = window.TR_LANGUAGES || [];
@@ -101,7 +110,7 @@
                 chosen = 'en-us';
             }
             window.TR_LOCALE = chosen;
-            syncLoad('/js/translations/' + chosen + '.js');
+            syncLoad('/js/translations/' + chosen + '.js?hash=' + translationAssetsHash);
         })();
         </script>
 

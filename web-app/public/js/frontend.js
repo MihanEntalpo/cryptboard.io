@@ -64,6 +64,8 @@ var lib = {
             lib.broadcast.init();
             lib.core.set_default_broadcast_listeners();
             lib.ui.language.init();
+            lib.ui.msg.show_initial_messages_loader();
+            lib.sound.init();
             lib.sw.init();
             
             var keys_was_generated = false;
@@ -224,6 +226,14 @@ var lib = {
             
             lib.broadcast.add_listener("reload_page", function(data){
                 window.location.reload();
+            });
+
+            lib.broadcast.add_listener("incoming_sound_setting_changed", function(data){
+                if (!data || !data.hasOwnProperty("enabled"))
+                {
+                    return;
+                }
+                return lib.sound.set_enabled(!!data.enabled, true);
             });
         },
         is_version_changed: function(){
@@ -667,6 +677,27 @@ var lib = {
                     lib.msg.delete_all();
                 });
             },
+            initial_messages_load_done: false,
+            show_initial_messages_loader: function() {
+                var loader = $("#messages-initial-loader");
+                var messages = $(".messages");
+
+                if (!loader.length || lib.ui.msg.initial_messages_load_done)
+                {
+                    return;
+                }
+
+                loader.find(".messages-initial-loader-text").text(tr("Loading messages..."));
+                loader.removeClass("hidden").show();
+                messages.addClass("initial-loading");
+            },
+            hide_initial_messages_loader: function() {
+                $("#messages-initial-loader").addClass("hidden").hide();
+                $(".messages").removeClass("initial-loading");
+            },
+            get_message_element: function(msg_id) {
+                return $(document.getElementById(msg_id));
+            },
             send_btn_click: function(){
                 var text = $('#text_to_send').val();
                 if (!text) return;
@@ -910,8 +941,18 @@ var lib = {
                         var percent = (bytes_loaded / msg['data']['transfer_size'] * 100).toFixed(2);
                         
                         var comment_block = (comment && lib.tools.trim(comment)) ? `<div class='text-container copyable-block'>${lib.tools.escape(comment)}</div>` : '';
+                        var file_text_content = `<div class='file-text'>
+                                                    <div class='file-text-content'>
+                                                        <div class='file-name'>
+                                                        ${tr("File %%", file_name_block)}<br>
+                                                        </div>
+                                                        <div class='file-size'>
+                                                        ${tr("size: %% bytes (%% loaded)", lib.tools.escape(lib.tools.num_with_spaces(msg.data.size)), percent + "%")}
+                                                        </div>
+                                                    </div>
+                                                </div>`;
                         
-                        var content = `<div class='file-content'>
+                        var fallback_content = `<div class='file-content'>
                                             <div class='file-button ${is_loaded ? 'loaded' : ''} ${btn_color}' title='${title}' onclick='${btn_onclick}'>
                                                 <div class='foreground'>
                                                     <i class='${btn_icon}'></i>
@@ -919,21 +960,31 @@ var lib = {
                                                 <div class='background'>
                                                     <i class='fa fa-file fa-3x'></i>
                                                 </div>
-                                            </div>                        
-                                            <div class='file-text'>
-                                                <div class='file-text-content'>
-                                                    <div class='file-name'>
-                                                    ${tr("File %%", file_name_block)}<br>
-                                                    </div>
-                                                    <div class='file-size'>
-                                                    ${tr("size: %% bytes (%% loaded)", lib.tools.escape(lib.tools.num_with_spaces(msg.data.size)), percent + "%")}
-                                                    </div>
-                                                </div>
                                             </div>
+                                            ${file_text_content}
                                        </div>
                                        ${comment_block}
                         `;
-                        return Promise.resolve(content);
+
+                        if (msg['data']['is_image'] && is_loaded)
+                        {
+                            var cached_preview = lib.files.get_cached_image_preview(msg.id);
+
+                            if (cached_preview)
+                            {
+                                return Promise.resolve(`<div class='image-content'>
+                                            <a href='#' class='image-preview-link' title='${title}' onclick='${btn_onclick}'>
+                                                <img class='image-preview' src='${cached_preview}' alt='${lib.tools.escape(msg.data.name, true)}'>
+                                            </a>
+                                            ${file_text_content}
+                                        </div>
+                                        ${comment_block}`);
+                            }
+
+                            lib.files.ensure_image_preview_loaded(msg.id);
+                        }
+
+                        return Promise.resolve(fallback_content);
                     },
                     "parse_payload": helpers.make_promise(
                         function(msg, payload) {
@@ -1125,17 +1176,40 @@ var lib = {
             },
             message_is_changed: function(msg_id){
                 return lib.storage.get("msg:" + msg_id).then(function(msg){
+                    lib.sound.log("[sound-debug] message_is_changed.loaded_msg", {
+                        msg_id: msg_id,
+                        has_msg: !!msg,
+                        type: msg && msg.type,
+                        incoming: msg && msg.incoming,
+                        is_image: !!(msg && msg.data && msg.data.is_image),
+                        is_loaded: !!(msg && msg.data && msg.data.is_loaded),
+                        need_processing: !!(msg && msg.need_processing)
+                    });
                     return lib.ui.draw.get_single_message_code(msg).then(function(content){
-                        lib.ui.call_if_cache_differs(".message#" + msg_id, content, function(){
+                        var current_message = lib.ui.msg.get_message_element(msg_id);
 
-                            if ($(".message#" + msg_id).length)
+                        lib.ui.call_if_cache_differs("message:" + msg_id, content, function(){
+                            var on_message_drawn = function() {
+                                lib.sound.log("[sound-debug] message_is_changed.drawn", {
+                                    msg_id: msg_id,
+                                    type: msg && msg.type,
+                                    incoming: msg && msg.incoming,
+                                    is_image: !!(msg && msg.data && msg.data.is_image),
+                                    is_loaded: !!(msg && msg.data && msg.data.is_loaded),
+                                    has_blob_preview: lib.ui.msg.get_message_element(msg_id).find(".image-preview").length > 0
+                                });
+                                lib.sound.on_message_displayed(msg);
+                            };
+
+                            if (current_message.length)
                             {
-                                $(".message#" + msg_id).replaceWith(content)   
+                                current_message.replaceWith(content);
+                                on_message_drawn();
                             }
                             else
                             {
                                 $(".messages").prepend(content);
-                                $(".message#" + msg_id).slideDown(500);
+                                lib.ui.msg.get_message_element(msg_id).slideDown(500, on_message_drawn);
                             }
                         });
                     }, helpers.reject_handler);
@@ -1583,7 +1657,7 @@ var lib = {
 
                 return render_promise.then(function(msg_content){
 
-                    var existing = $(".message#" + msg.id).length > 0;
+                    var existing = lib.ui.msg.get_message_element(msg.id).length > 0;
 
                     var incoming = msg['incoming'];
 
@@ -1612,8 +1686,24 @@ var lib = {
                 if (lib.msg.debug) console.log("drawing messages...");
                 
                 $('#send_file_button').prop("disabled", !lib.ui.msg.enable_send_files);
+
+                if (!lib.ui.msg.initial_messages_load_done)
+                {
+                    lib.ui.msg.show_initial_messages_loader();
+                }
+
+                var finish_initial_messages_load = function(){
+                    if (!lib.ui.msg.initial_messages_load_done)
+                    {
+                        lib.ui.msg.initial_messages_load_done = true;
+                    }
+                    lib.ui.msg.hide_initial_messages_loader();
+                };
                 
                 return lib.msg.get_stored_ids().then(function(msg_ids){
+                    lib.sound.log("[sound-debug] draw.messages.start", {
+                        stored_msg_ids: msg_ids
+                    });
                     if (lib.msg.debug) console.log("msg_ids to draw:", msg_ids);
                     
                     var existing_msgs = {};
@@ -1658,24 +1748,59 @@ var lib = {
                                 
                                 if (!msg || existing_msgs.hasOwnProperty(msg_id))
                                 {
-                                    return Promise.resolve();
+                                    render_promises.push(Promise.resolve(null));
+                                    return;
                                 }
 
-                                lib.ui.draw.get_single_message_code(msg).then(function(content){
-                                    lib.ui.call_if_cache_differs(".message#" + msg_id, content, function(){
+                                render_promises.push(
+                                    lib.ui.draw.get_single_message_code(msg).then(function(content){
+                                        return {
+                                            msg_id: msg_id,
+                                            msg: msg,
+                                            content: content
+                                        };
+                                    }, helpers.reject_handler)
+                                );
+                            });
 
-                                        if ($(".message#" + msg_id).length)
+                            return Promise.all(render_promises).then(function(rendered_messages){
+                                rendered_messages.forEach(function(rendered_message){
+                                    if (!rendered_message)
+                                    {
+                                        return;
+                                    }
+
+                                    var msg_id = rendered_message.msg_id;
+                                    var msg = rendered_message.msg;
+                                    var content = rendered_message.content;
+                                    var current_message = lib.ui.msg.get_message_element(msg_id);
+
+                                    lib.ui.call_if_cache_differs("message:" + msg_id, content, function(){
+                                        var on_message_drawn = function() {
+                                            lib.sound.log("[sound-debug] draw.messages.drawn", {
+                                                msg_id: msg_id,
+                                                type: msg && msg.type,
+                                                incoming: msg && msg.incoming,
+                                                is_image: !!(msg && msg.data && msg.data.is_image),
+                                                is_loaded: !!(msg && msg.data && msg.data.is_loaded),
+                                                has_blob_preview: lib.ui.msg.get_message_element(msg_id).find(".image-preview").length > 0
+                                            });
+                                            lib.sound.on_message_displayed(msg);
+                                        };
+
+                                        if (current_message.length)
                                         {
-                                            $(".message#" + msg_id).replaceWith(content)   
+                                            current_message.replaceWith(content);
+                                            on_message_drawn();
                                         }
                                         else
                                         {
                                             $(".messages").prepend(content);
-                                            $(".message#" + msg_id).slideDown(500);
+                                            lib.ui.msg.get_message_element(msg_id).slideDown(500, on_message_drawn);
                                         }
                                     }, helpers.reject_handler);
-                                }, helpers.reject_handler);
-                            });
+                                });
+                            }, helpers.reject_handler);
                         }, helpers.reject_handler);
                     }
                     else
@@ -1683,7 +1808,13 @@ var lib = {
                         return Promise.resolve();
                     }
                     
-                }, helpers.reject_handler);                
+                }, helpers.reject_handler).then(function(res){
+                    finish_initial_messages_load();
+                    return res;
+                }, function(err){
+                    finish_initial_messages_load();
+                    throw err;
+                });                
             },
             receivers: function(){
                 
@@ -1764,14 +1895,53 @@ var lib = {
         debug: true,
         max_file_size: 1024 * 1024 * 10,
         file_part_size: 1024 * 200,
+        image_preview_cache: {},
+        image_preview_loading: {},
+        get_cached_image_preview: function(file_msg_id) {
+            return lib.files.image_preview_cache[file_msg_id] || null;
+        },
+        ensure_image_preview_loaded: function(file_msg_id) {
+            if (lib.files.image_preview_cache[file_msg_id] || lib.files.image_preview_loading[file_msg_id])
+            {
+                return lib.files.image_preview_loading[file_msg_id] || Promise.resolve(lib.files.image_preview_cache[file_msg_id]);
+            }
+
+            var loading_promise = lib.storage.get("blob:file_msg_id:" + file_msg_id).then(function(file_contents){
+                if (file_contents)
+                {
+                    lib.files.image_preview_cache[file_msg_id] = file_contents;
+                    return lib.ui.msg.message_is_changed(file_msg_id).then(function(){
+                        return file_contents;
+                    });
+                }
+
+                return null;
+            }, helpers.reject_handler).then(function(result){
+                delete lib.files.image_preview_loading[file_msg_id];
+                return result;
+            }, function(err){
+                delete lib.files.image_preview_loading[file_msg_id];
+                throw err;
+            });
+
+            lib.files.image_preview_loading[file_msg_id] = loading_promise;
+            return loading_promise;
+        },
         update_file_parts: function(file_id){
             return Promise.resolve().then(function(){ 
                 return lib.storage.get(
                     "file:" + file_id + ":msg"
                 ).then(function(file_msg_id){
+                    lib.sound.log("[sound-debug] update_file_parts.start", {
+                        file_id: file_id,
+                        file_msg_id: file_msg_id
+                    });
                     
                     if (!file_msg_id)
                     {
+                        lib.sound.log("[sound-debug] update_file_parts.skip.no_file_msg_id", {
+                            file_id: file_id
+                        });
                         return Promise.resolve();
                     }
                     
@@ -1781,6 +1951,10 @@ var lib = {
                         
                         if (!file_msg_obj)
                         {
+                            lib.sound.log("[sound-debug] update_file_parts.skip.no_file_msg_obj", {
+                                file_id: file_id,
+                                file_msg_id: file_msg_id
+                            });
                             return Promise.resolve();
                         }
                         
@@ -1815,12 +1989,29 @@ var lib = {
 
                             file_msg_obj.data.parts_messages_ids = cur_ids;
 
+                            lib.sound.log("[sound-debug] update_file_parts.progress", {
+                                file_id: file_id,
+                                file_msg_id: file_msg_id,
+                                bytes_loaded: transferred_bytes,
+                                loaded_parts: Object.keys(cur_ids).length,
+                                total_parts: file_msg_obj.data.parts,
+                                is_loaded: file_msg_obj.data.is_loaded,
+                                is_image: !!(file_msg_obj.data && file_msg_obj.data.is_image),
+                                incoming: !!file_msg_obj.incoming
+                            });
+
                             var p = lib.storage.set("msg:" + file_msg_id, file_msg_obj).then(function(){
                                 return lib.ui.msg.message_is_changed(file_msg_id);
                             }, helpers.reject_handler);
 
                             if (file_msg_obj.data.is_loaded)
                             {
+                                lib.sound.log("[sound-debug] update_file_parts.loaded", {
+                                    file_id: file_id,
+                                    file_msg_id: file_msg_id,
+                                    is_image: !!(file_msg_obj.data && file_msg_obj.data.is_image),
+                                    incoming: !!file_msg_obj.incoming
+                                });
                                 return p.then(function(){ lib.files.plan_file_reconstruction(file_msg_id); }, helpers.reject_handler);
                             }
                             else
@@ -2169,6 +2360,13 @@ var lib = {
             return lib.storage.get("msg:" + file_msg_id).then(function(file_msg_obj){
                 if (lib.files.debug)console.log("RECONSTRUCTION FILE");
                 if (lib.files.debug)console.log(file_msg_obj);
+                lib.sound.log("[sound-debug] reconstruct_file_from_parts.start", {
+                    file_msg_id: file_msg_id,
+                    has_msg: !!file_msg_obj,
+                    incoming: !!(file_msg_obj && file_msg_obj.incoming),
+                    is_image: !!(file_msg_obj && file_msg_obj.data && file_msg_obj.data.is_image),
+                    parts: file_msg_obj && file_msg_obj.data ? file_msg_obj.data.parts : null
+                });
                 var parts_messages_ids = file_msg_obj.data.parts_messages_ids;
                 var blobs_promises = [];
                 for (var i=0; i<file_msg_obj.data.parts; i++)
@@ -2184,6 +2382,12 @@ var lib = {
                     });
                     
                     var hash = lib.crypto.sha256(content);
+                    lib.sound.log("[sound-debug] reconstruct_file_from_parts.computed", {
+                        file_msg_id: file_msg_id,
+                        content_length: content.length,
+                        hash: hash,
+                        expected_hash: file_msg_obj.data.sha256
+                    });
                     
                     if (lib.files.debug)console.log("new content hash", hash);
                     
@@ -2206,7 +2410,14 @@ var lib = {
                             "blob:file_msg_id:" + file_msg_id, content
                         ).then(
                             function() { lib.files.clean_loading_artifacts(file_msg_id); }, helpers.reject_handler
-                        );
+                        ).then(function(){
+                            lib.sound.log("[sound-debug] reconstruct_file_from_parts.blob_saved", {
+                                file_msg_id: file_msg_id,
+                                incoming: !!file_msg_obj.incoming,
+                                is_image: !!(file_msg_obj.data && file_msg_obj.data.is_image)
+                            });
+                            return lib.ui.msg.message_is_changed(file_msg_id);
+                        }, helpers.reject_handler);
                     }
                 }, helpers.reject_handler);                
             }, helpers.reject_handler);
@@ -2397,6 +2608,274 @@ var lib = {
         info: function()
         {
             console.info.apply(this, arguments);
+        }
+    },
+    sound: {
+        storage_key_enabled: "incoming_message_sound_enabled",
+        storage_key_displayed_prefix: "incoming_message_displayed:",
+        audio_urls: {
+            "message": "/sound/message.mp3"
+        },
+        enabled: false,
+        debug: false,
+        ready_promise: Promise.resolve(false),
+        log: function() {
+            if (!lib.sound.debug)
+            {
+                return;
+            }
+            console.log.apply(console, arguments);
+        },
+        init: function() {
+            var toggle = $('#incoming-sound-toggle');
+
+            if (toggle.length)
+            {
+                toggle.off("click").on("click", function(event){
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (event.stopImmediatePropagation)
+                    {
+                        event.stopImmediatePropagation();
+                    }
+                    lib.sound.ready_promise.then(function(){
+                        return lib.sound.toggle();
+                    }, helpers.reject_handler);
+                });
+            }
+
+            lib.sound.sync_ui();
+            lib.sound.debug = !!getFrontendConf("debug.sound", false);
+
+            lib.sound.ready_promise = lib.storage.get(lib.sound.storage_key_enabled, false).then(function(enabled){
+                lib.sound.enabled = !!enabled;
+                lib.sound.sync_ui();
+                return lib.sound.enabled;
+            }, helpers.reject_handler);
+
+            return lib.sound.ready_promise;
+        },
+        sync_ui: function() {
+            var toggle = $('#incoming-sound-toggle');
+
+            if (!toggle.length)
+            {
+                return;
+            }
+
+            var enabled = !!lib.sound.enabled;
+            var title = enabled
+                ? tr("Incoming message sound is on")
+                : tr("Incoming message sound is off");
+
+            toggle
+                .attr("title", title)
+                .attr("aria-label", title)
+                .attr("aria-pressed", enabled ? "true" : "false");
+
+            toggle.html("<i class='fa " + (enabled ? "fa-volume-up" : "fa-volume-mute") + "'></i>");
+
+            if (window.FontAwesome && FontAwesome.dom && FontAwesome.dom.i2svg)
+            {
+                FontAwesome.dom.i2svg({
+                    node: toggle.get(0)
+                });
+            }
+        },
+        set_enabled: function(enabled, skip_broadcast) {
+            lib.sound.enabled = !!enabled;
+            lib.sound.sync_ui();
+
+            return lib.storage.set(lib.sound.storage_key_enabled, lib.sound.enabled, false).then(function(){
+                if (!skip_broadcast)
+                {
+                    lib.broadcast.post("incoming_sound_setting_changed", {
+                        "enabled": lib.sound.enabled
+                    });
+                }
+                return lib.sound.enabled;
+            }, helpers.reject_handler);
+        },
+        toggle: function() {
+            return lib.sound.set_enabled(!lib.sound.enabled);
+        },
+        is_incoming_notifiable_message: function(msg) {
+            if (!(msg && msg.incoming))
+            {
+                return false;
+            }
+
+            if (msg.type === "file")
+            {
+                return !!(
+                    msg.data
+                    && msg.data.is_loaded
+                    && !msg.data.is_cancelled
+                    && !msg.data.is_corrupted
+                );
+            }
+
+            return true;
+        },
+        get_displayed_key: function(msg_id) {
+            return lib.sound.storage_key_displayed_prefix + msg_id;
+        },
+        get_audio_url: function(type) {
+            if (!type)
+            {
+                type = "message";
+            }
+
+            if (!lib.sound.audio_urls.hasOwnProperty(type))
+            {
+                return null;
+            }
+
+            return lib.sound.audio_urls[type];
+        },
+        play: function(type) {
+            var audio_type = type || "message";
+            var audio_url = lib.sound.get_audio_url(audio_type);
+            lib.sound.log("[sound-debug] sound.play.start", {
+                type: audio_type,
+                audio_url: audio_url,
+                enabled: lib.sound.enabled
+            });
+            if (!audio_url)
+            {
+                lib.sound.log("[sound-debug] sound.play.skip.unknown_type", {
+                    type: audio_type
+                });
+                return Promise.resolve(false);
+            }
+            if (typeof Audio === "undefined")
+            {
+                lib.sound.log("[sound-debug] sound.play.skip.no_audio_constructor");
+                return Promise.resolve(false);
+            }
+
+            var audio = new Audio(audio_url);
+            audio.preload = "auto";
+
+            try
+            {
+                var play_result = audio.play();
+            }
+            catch (e)
+            {
+                lib.sound.log("[sound-debug] sound.play.exception", e);
+                console.error(e);
+                return Promise.resolve(false);
+            }
+
+            if (play_result && typeof play_result.then === "function")
+            {
+                return play_result.then(function(){
+                    lib.sound.log("[sound-debug] sound.play.ok");
+                    return true;
+                }).catch(function(err){
+                    lib.sound.log("[sound-debug] sound.play.error", err);
+                    console.error(err);
+                    return false;
+                });
+            }
+
+            lib.sound.log("[sound-debug] sound.play.sync_ok");
+            return Promise.resolve(true);
+        },
+        on_message_displayed: function(msg) {
+            lib.sound.log("[sound-debug] sound.on_message_displayed.called", {
+                msg_id: msg && msg.id,
+                type: msg && msg.type,
+                incoming: msg && msg.incoming,
+                is_image: !!(msg && msg.data && msg.data.is_image),
+                is_loaded: !!(msg && msg.data && msg.data.is_loaded),
+                is_cancelled: !!(msg && msg.data && msg.data.is_cancelled),
+                is_corrupted: !!(msg && msg.data && msg.data.is_corrupted),
+                enabled: lib.sound.enabled
+            });
+            if (!lib.sound.is_incoming_notifiable_message(msg))
+            {
+                lib.sound.log("[sound-debug] sound.on_message_displayed.skip.not_incoming_message", {
+                    msg_id: msg && msg.id,
+                    type: msg && msg.type,
+                    incoming: msg && msg.incoming,
+                    is_loaded: !!(msg && msg.data && msg.data.is_loaded),
+                    is_cancelled: !!(msg && msg.data && msg.data.is_cancelled),
+                    is_corrupted: !!(msg && msg.data && msg.data.is_corrupted)
+                });
+                return Promise.resolve(false);
+            }
+
+            var displayed_key = lib.sound.get_displayed_key(msg.id);
+            var lock = Locker.get("incoming-image-display:" + msg.id, null, {
+                expiry: 5000,
+                spinDelay: 25
+            });
+
+            return lock.try_lock().then(function(locked){
+                lib.sound.log("[sound-debug] sound.on_message_displayed.lock_result", {
+                    msg_id: msg.id,
+                    locked: locked
+                });
+                if (!locked)
+                {
+                    return false;
+                }
+
+                var release_lock = function(result) {
+                    return lock.unlock().then(function(){
+                        return result;
+                    }, function(unlock_err){
+                        console.error(unlock_err);
+                        return result;
+                    });
+                };
+
+                var release_lock_with_error = function(err) {
+                    return lock.unlock().then(function(){
+                        throw err;
+                    }, function(unlock_err){
+                        console.error(unlock_err);
+                        throw err;
+                    });
+                };
+
+                return lib.storage.get(displayed_key, false).then(function(is_displayed){
+                    lib.sound.log("[sound-debug] sound.on_message_displayed.displayed_flag", {
+                        msg_id: msg.id,
+                        displayed_key: displayed_key,
+                        is_displayed: is_displayed
+                    });
+                    if (is_displayed)
+                    {
+                        return false;
+                    }
+
+                    return lib.storage.set(displayed_key, true, false).then(function(){
+                        lib.sound.log("[sound-debug] sound.on_message_displayed.marked_displayed", {
+                            msg_id: msg.id,
+                            enabled: lib.sound.enabled
+                        });
+                        if (!lib.sound.enabled)
+                        {
+                            lib.sound.log("[sound-debug] sound.on_message_displayed.skip.sound_disabled", {
+                                msg_id: msg.id
+                            });
+                            return false;
+                        }
+
+                        lib.sound.log("[sound-debug] sound.on_message_displayed.playing", {
+                            msg_id: msg.id
+                        });
+                        return lib.sound.play("message");
+                    }, helpers.reject_handler);
+                }, helpers.reject_handler).then(release_lock, release_lock_with_error);
+            }).catch(function(err){
+                lib.sound.log("[sound-debug] sound.on_message_displayed.error", err);
+                console.error(err);
+                return false;
+            });
         }
     },
     storage: {
@@ -3097,12 +3576,21 @@ var lib = {
         processings: {},
         list: function(){
             return lib.ajax.call("POST", "/api/receive-list", {}).then(function(res){
+                lib.sound.log("[sound-debug] msg.list", {
+                    count: res.length,
+                    ids: res
+                });
                 lib.msg.has_unread = res.length > 0;
                 return res;
             }, helpers.reject_handler);
         },
         get: function(msg_ids){
             return lib.ajax.call("POST", "/api/receive", {"msg_ids": msg_ids}).then(function(res){
+                lib.sound.log("[sound-debug] msg.get", {
+                    requested_ids: msg_ids,
+                    received_count: res.length,
+                    received_ids: res.map(function(item){ return item.id; })
+                });
                 return res;
             }, helpers.reject_handler);
         },
@@ -3118,8 +3606,8 @@ var lib = {
                         
                         promises.push(lib.storage.del("blob:file_msg_id:" + msg_id));
                         
-                        $(".message#" + msg_id).slideUp(500, function(){
-                            $(".message#" + msg_id).remove();
+                        lib.ui.msg.get_message_element(msg_id).slideUp(500, function(){
+                            lib.ui.msg.get_message_element(msg_id).remove();
                         });
                     });
                     
@@ -3311,8 +3799,12 @@ var lib = {
             return lib.ajax.call("POST", "/api/read", {"msg_ids": msg_ids});
         },
         check_new_and_draw: function(){
+            lib.sound.log("[sound-debug] check_new_and_draw.start");
             return lib.msg.check_new().then(
-                function(res){ return lib.ui.draw.messages(); }, function(err){
+                function(res){
+                    lib.sound.log("[sound-debug] check_new_and_draw.after_check_new");
+                    return lib.ui.draw.messages();
+                }, function(err){
                     if (err !== "check_new already in progress")
                     {
                         helpers.reject_handler(err);
@@ -3325,6 +3817,13 @@ var lib = {
             var from = msg['from'];
             var to = msg['to'];
             var payload = msg['payload'];
+            lib.sound.log("[sound-debug] add_msg.received", {
+                msg_id: msg_id,
+                from: from,
+                to: to,
+                has_payload: payload !== undefined && payload !== null,
+                payload_type: typeof payload
+            });
             
             var incoming = !(from === lib.client.uid);
             
@@ -3333,9 +3832,25 @@ var lib = {
             ).then(function(receiver){
                 
                 return lib.msg.parse_payload(msg).then(function(parsed_msg){
+                    lib.sound.log("[sound-debug] add_msg.parsed", {
+                        msg_id: msg_id,
+                        incoming: incoming,
+                        type: parsed_msg && parsed_msg.type,
+                        state: parsed_msg && parsed_msg.state,
+                        is_image: !!(parsed_msg && parsed_msg.data && parsed_msg.data.is_image),
+                        is_loaded: !!(parsed_msg && parsed_msg.data && parsed_msg.data.is_loaded),
+                        need_processing: !!(parsed_msg && parsed_msg.need_processing)
+                    });
                     if (lib.msg.debug) console.log("msg_id:" + msg_id + " parsed: ", parsed_msg);
                     parsed_msg['incoming'] = incoming;
                     return lib.storage.set("msg:" + msg_id, parsed_msg).then(function(){
+                        lib.sound.log("[sound-debug] add_msg.saved", {
+                            msg_id: msg_id,
+                            incoming: incoming,
+                            type: parsed_msg && parsed_msg.type,
+                            is_image: !!(parsed_msg && parsed_msg.data && parsed_msg.data.is_image),
+                            is_loaded: !!(parsed_msg && parsed_msg.data && parsed_msg.data.is_loaded)
+                        });
                         if (lib.msg.debug) console.log("msg:" + msg_id + " saved to storage");
                         
                         var p = Promise.resolve();

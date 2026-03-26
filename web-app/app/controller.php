@@ -149,6 +149,7 @@ Router::add(["pattern"=>"#^/js/env\.js(\?.*)?#", "type"=>"regexp"], function(){
             "ajax" => (bool)get_conf("FRONTEND_AJAX_DEBUG", false),
             "messages" => (bool)get_conf("FRONTEND_MESSAGES_DEBUG", false),
             "files" => (bool)get_conf("FRONTEND_FILES_DEBUG", false),
+            "sound" => (bool)get_conf("FRONTEND_SOUND_DEBUG", false),
         ],
     ];
 
