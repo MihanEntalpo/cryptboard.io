@@ -133,6 +133,7 @@ var lib = {
                 lib.msg.auto_checker_msg.start()
                 
                 lib.ui.draw.receivers(); 
+                lib.ui.receivers.resend_to_new.init();
                 
                 lib.ajax.auto_check_refresh_auth.start();
                 
@@ -234,6 +235,14 @@ var lib = {
                     return;
                 }
                 return lib.sound.set_enabled(!!data.enabled, true);
+            });
+
+            lib.broadcast.add_listener("resend_to_new_setting_changed", function(data){
+                if (!data || !data.hasOwnProperty("enabled"))
+                {
+                    return;
+                }
+                $("#resend-to-new-toggle").prop("checked", !!data.enabled);
             });
         },
         is_version_changed: function(){
@@ -1046,7 +1055,9 @@ var lib = {
                                     else
                                     {
                                         lib.receivers.add_receiver(payload['uid'], payload['public_key']).then(function(){
-                                            resolve(msg);
+                                            return lib.msg.resend_own_messages_to_receiver_if_enabled(payload['uid']).then(function(){
+                                                resolve(msg);
+                                            });
                                         });
                                     }
                                 });
@@ -1217,6 +1228,39 @@ var lib = {
             }
         },
         receivers: {
+            resend_to_new: {
+                storage_key: "resend_to_new_enabled",
+                init: function() {
+                    var toggle = $("#resend-to-new-toggle");
+                    if (!toggle.length)
+                    {
+                        return Promise.resolve(false);
+                    }
+
+                    toggle.off("change").on("change", function(event){
+                        return lib.ui.receivers.resend_to_new.set_enabled($(event.target).prop("checked"));
+                    });
+
+                    return lib.storage.get(lib.ui.receivers.resend_to_new.storage_key, false).then(function(enabled){
+                        var checked = !!enabled;
+                        toggle.prop("checked", checked);
+                        return checked;
+                    }, helpers.reject_handler);
+                },
+                is_enabled: function() {
+                    return lib.storage.get(lib.ui.receivers.resend_to_new.storage_key, false).then(function(enabled){
+                        return !!enabled;
+                    }, helpers.reject_handler);
+                },
+                set_enabled: function(enabled) {
+                    enabled = !!enabled;
+                    $("#resend-to-new-toggle").prop("checked", enabled);
+                    return lib.storage.set(lib.ui.receivers.resend_to_new.storage_key, enabled, false).then(function(){
+                        lib.broadcast.post("resend_to_new_setting_changed", {"enabled": enabled});
+                        return enabled;
+                    }, helpers.reject_handler);
+                }
+            },
             window: {
                 current_modal: null,
                 get_content: function(uid){
@@ -3736,6 +3780,116 @@ var lib = {
                 });
             }, helpers.reject_handler);
             return Promise.all(send_promises);
+        },
+        resend_own_messages_to_receiver_if_enabled: function(receiver_uid) {
+            if (!receiver_uid || receiver_uid === lib.client.uid)
+            {
+                return Promise.resolve(false);
+            }
+
+            return lib.ui.receivers.resend_to_new.is_enabled().then(function(enabled){
+                if (!enabled)
+                {
+                    return false;
+                }
+                return lib.msg.resend_own_messages_to_receiver(receiver_uid).then(function(sent_count){
+                    if (lib.msg.debug)
+                    {
+                        console.log("Resent", sent_count, "messages to receiver", receiver_uid);
+                    }
+                    return sent_count > 0;
+                });
+            }, helpers.reject_handler);
+        },
+        resend_own_messages_to_receiver: function(receiver_uid){
+            return lib.msg.get_stored_ids().then(function(stored_ids){
+                if (!Array.isArray(stored_ids) || stored_ids.length === 0)
+                {
+                    return 0;
+                }
+
+                var load_promises = stored_ids.map(function(msg_id){
+                    return lib.storage.get("msg:" + msg_id);
+                });
+
+                return Promise.all(load_promises).then(function(stored_messages){
+                    var payload_promises = stored_messages.map(function(stored_message){
+                        if (!stored_message || stored_message.incoming || stored_message.from !== lib.client.uid)
+                        {
+                            return Promise.resolve(null);
+                        }
+
+                        if (stored_message.type === "text" && stored_message.data && stored_message.data.hasOwnProperty("text"))
+                        {
+                            return Promise.resolve({
+                                "type": "text",
+                                "text": stored_message.data.text
+                            });
+                        }
+                        if (stored_message.type === "add" && stored_message.data && stored_message.data.uid && stored_message.data.public_key)
+                        {
+                            return Promise.resolve({
+                                "type": "add",
+                                "uid": stored_message.data.uid,
+                                "public_key": stored_message.data.public_key
+                            });
+                        }
+                        if (stored_message.type === "file" && stored_message.data && stored_message.data.id)
+                        {
+                            return Promise.resolve({
+                                "type": "file",
+                                "id": stored_message.data.id,
+                                "name": stored_message.data.name,
+                                "parts": stored_message.data.parts,
+                                "size": stored_message.data.size,
+                                "transfer_size": stored_message.data.transfer_size,
+                                "sha256": stored_message.data.sha256,
+                                "mime": stored_message.data.mime,
+                                "is_image": stored_message.data.is_image,
+                                "comment": stored_message.data.comment
+                            });
+                        }
+                        if (stored_message.type === "file_part" && stored_message.data && stored_message.data.file_id && stored_message.data.part_num && stored_message.data.blob_id)
+                        {
+                            return lib.storage.get(stored_message.data.blob_id).then(function(content){
+                                if (content === null || content === undefined)
+                                {
+                                    return null;
+                                }
+                                return {
+                                    "type": "file_part",
+                                    "file_id": stored_message.data.file_id,
+                                    "part_num": stored_message.data.part_num,
+                                    "content": content
+                                };
+                            }, helpers.reject_handler);
+                        }
+
+                        return Promise.resolve(null);
+                    });
+
+                    return Promise.all(payload_promises).then(function(messages_to_resend){
+                        var send_count = 0;
+                        var send_chain = Promise.resolve();
+
+                        messages_to_resend.forEach(function(payload){
+                            if (!payload)
+                            {
+                                return;
+                            }
+                            send_chain = send_chain.then(function(){
+                                return lib.msg.send_raw(payload, [receiver_uid]).then(function(){
+                                    send_count++;
+                                });
+                            });
+                        });
+
+                        return send_chain.then(function(){
+                            return send_count;
+                        });
+                    }, helpers.reject_handler);
+                }, helpers.reject_handler);
+            }, helpers.reject_handler);
         },
         check_new: function(){
             if (lib.msg.checking_new_in_progress)
