@@ -65,6 +65,10 @@
       {Receivers}
       <div class="receivers">          
       </div>
+      <div class="form-check form-switch receivers-option">
+          <input class="form-check-input" type="checkbox" id="resend-to-new-toggle">
+          <label class="form-check-label" for="resend-to-new-toggle">{Resend to new}</label>
+      </div>
       <div class='row'>
           <div class='col'>
             <a href='/share-key' class='btn btn-success full-width'>{Share my key}</a>

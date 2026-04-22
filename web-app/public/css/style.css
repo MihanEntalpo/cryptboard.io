@@ -499,6 +499,11 @@ main .tab.active
     max-width: 500px;
 }
 
+.receivers-option
+{
+    margin: 8px 0 10px 0;
+}
+
 .big-avatar
 {
     max-width: 500px;

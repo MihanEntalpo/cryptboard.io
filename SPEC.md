@@ -23,6 +23,7 @@ The core design principle is: the server transports opaque payloads and authenti
 - image preview for loaded image files
 - receiver/contact list with avatars derived from UID + public key
 - deterministic avatars used as a simple visual integrity check for the `uid + public_key` pair during key exchange
+- optional "Resend to new" mode: when enabled, previously sent local text/file/key-share messages are re-sent to a newly added receiver after receiving their add-contact packet
 - multi-tab coordination
 - multilingual UI: English, Russian, Simplified Chinese
 - kill-session workflow that clears both server and browser state

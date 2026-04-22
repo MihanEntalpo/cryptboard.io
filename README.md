@@ -21,6 +21,7 @@ Website: https://cryptboard.io/
 * All sent data encrypted on the client and could not be decrypted by the server
 * Clients adding each other to the "receivers list" by sending their public key and user ID using third-party channel
 * Possible to add public key and user ID by scanning QR-code
+* Optional "Resend to new" checkbox on Clipboard page re-sends your previously sent text/file/key-share messages to newly added receivers
 * Single button click to clear all client's data and keys and start a new session
 
 ## Disclaimers
@@ -39,6 +40,7 @@ Website: https://cryptboard.io/
     * You can copy the link on the "Share key" page and send it over some other messenger or email
     * Also, you can copy QR code (make a screenshot) and send it over other messenger or email
 * Device where your uid and the public key is added could automatically send its uid and public key back encrypted if the checkbox "Send my key back" is checked (by default it is)
+* On Clipboard page, if "Resend to new" is enabled, outgoing text, file and key-share messages from your local history are automatically re-sent when a new receiver key arrives via add-contact message
 * After uid and key is added you can send text or files back and forth between devices (or people)
 * Avatars should be used to check if uid and the public key wasn't changed while traveling through third-party messenger
 
@@ -323,4 +325,3 @@ FRONTEND_POLL_REFRESH_AUTH_MS=60000
 Here `31536000` is approximately 1 year in seconds. You can increase it further if needed.
 
 > Important: very large TTL values increase the risk of long-lived compromised sessions. Choose production values according to your threat model.
-

@@ -36,6 +36,7 @@ window.TR['en-us'] = {
     "Send message": "Send message",
     "(enter)": "(enter)",
     "Receivers": "Receivers",
+    "Resend to new": "Resend to new",
     "Share my key": "Share my key",
     "Add new key": "Add new key",
     "To mitigate MiTM security risk, after entering uid and public_key please compare avatar with your conterpart!": "To mitigate MiTM security risk, after entering uid and public_key please compare avatar with your counterpart!",

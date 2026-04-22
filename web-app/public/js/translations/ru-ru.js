@@ -36,6 +36,7 @@ window.TR['ru-ru'] = {
     "Send message": "Отправить сообщение",
     "(enter)": "(enter)",
     "Receivers": "Получатели",
+    "Resend to new": "Переотправлять новым",
     "Share my key": "Поделиться моим ключом",
     "Add new key": "Добавить новый ключ",
     "To mitigate MiTM security risk, after entering uid and public_key please compare avatar with your conterpart!": "Чтобы снизить риск MiTM, после ввода uid и public_key обязательно сравните аватар с собеседником!",

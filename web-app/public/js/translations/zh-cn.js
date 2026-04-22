@@ -36,6 +36,7 @@ window.TR['zh-cn'] = {
     "Send message": "发送消息",
     "(enter)": "(回车)",
     "Receivers": "接收方",
+    "Resend to new": "转发给新加入者",
     "Share my key": "分享我的密钥",
     "Add new key": "添加新密钥",
     "To mitigate MiTM security risk, after entering uid and public_key please compare avatar with your conterpart!": "为降低中间人攻击风险，输入 uid 和 public_key 后请务必与对方核对头像！",
