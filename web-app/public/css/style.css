@@ -301,6 +301,11 @@ main .tab.active
     min-height: 64px;
 }
 
+.mobile-receivers-button
+{
+    display: none;
+}
+
 .key-share-link-group
 {
     max-width:520px;
@@ -486,6 +491,24 @@ main .tab.active
     .receivers-wrapper
     {
         padding-left: 3px;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .messages-wrapper
+    {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .receivers-wrapper
+    {
+        display: none;
+    }
+
+    .mobile-receivers-button
+    {
+        display: inline-block;
     }
 }
 

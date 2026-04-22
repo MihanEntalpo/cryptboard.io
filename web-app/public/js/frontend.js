@@ -1301,6 +1301,14 @@ var lib = {
                     }
                 }
             },
+            open_mobile_modal: function(){
+                var content = `
+                    <div class="mobile-receivers-modal-content">
+                        ${$(".receivers-wrapper").html()}
+                    </div>
+                `;
+                lib.modal.alert(tr("Receivers"), content);
+            },
             get_receiver_html_code: function(receiver, existing){
                 var avatar_number = -1;
                 var pencil = true;
