@@ -1,0 +1,35 @@
+name: deploy-dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Git branch to deploy to dev.cryptboard.io"
+        required: true
+        default: "main"
+        type: string
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy-dev:
+    runs-on: self-hosted
+    env:
+      DEPLOY_DIR: /home/cryptboard/dev.cryptboard.io
+      DEPLOY_BRANCH: ${{ inputs.branch }}
+    steps:
+      - name: Deploy selected branch to dev
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd "$DEPLOY_DIR"
+          git fetch --prune origin "$DEPLOY_BRANCH"
+          git checkout -B "$DEPLOY_BRANCH" "origin/$DEPLOY_BRANCH"
+          git reset --hard "origin/$DEPLOY_BRANCH"
+
+          cd ./web-app
+          export HOME=/home/cryptboard
+          composer install
