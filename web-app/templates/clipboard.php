@@ -48,6 +48,14 @@
                       >
                       {Send message} <span class="grey">{(enter)}</span> <i class='fa fa-arrow-circle-right idle'></i>
                         </button>
+              <button type="button"
+                      class="btn btn-sm btn-light mobile-receivers-button"
+                      id="open_receivers_modal_button"
+                      title="{Receivers}"
+                      onclick='lib.ui.receivers.open_mobile_modal()'
+                      >
+                      {Receivers}
+              </button>
               <input type="file"  style="display: none;" id="file-selector" multiple onchange="lib.ui.msg.send_file_selected(event, this)">
           </div>
       </div>
