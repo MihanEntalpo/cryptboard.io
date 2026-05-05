@@ -47,7 +47,14 @@
                       disabled
                       >
                       {Send message} <span class="grey">{(enter)}</span> <i class='fa fa-arrow-circle-right idle'></i>
-                        </button>
+              </button>
+              <button type="button"
+                      class="btn btn-sm btn-light mobile-contacts-button"
+                      id="mobile_contacts_button"
+                      title="{Contacts}"
+                      onclick='lib.ui.receivers.mobile.open()'>
+                      {Contacts} <i class='fa fa-address-book'></i>
+              </button>
               <input type="file"  style="display: none;" id="file-selector" multiple onchange="lib.ui.msg.send_file_selected(event, this)">
           </div>
       </div>
