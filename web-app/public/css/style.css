@@ -509,6 +509,29 @@ main .tab.active
     margin-top:56px;
 }
 
+
+.mobile-contacts-button
+{
+    display: none;
+}
+
+@media screen and (max-width: 767px) {
+    .messages-wrapper
+    {
+        width: 100%;
+    }
+
+    .receivers-wrapper
+    {
+        display: none;
+    }
+
+    .mobile-contacts-button
+    {
+        display: inline-block;
+    }
+}
+
 .large-avatar
 {
     min-width: 200px;

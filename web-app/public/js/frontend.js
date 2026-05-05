@@ -1217,6 +1217,23 @@ var lib = {
             }
         },
         receivers: {
+            mobile: {
+                current_modal: null,
+                open: function() {
+                    var content = $(".receivers-wrapper").html();
+                    lib.ui.receivers.mobile.current_modal = lib.modal.alert(tr("Contacts"), `<div class='mobile-receivers-modal'>${content}</div>`, function(){
+                        lib.ui.receivers.mobile.current_modal = null;
+                    });
+                },
+                update_if_opened: function() {
+                    var modal = lib.ui.receivers.mobile.current_modal;
+                    if (modal && $(modal).length)
+                    {
+                        var content = $(".receivers-wrapper").html();
+                        $(modal).find('.mobile-receivers-modal').html(content);
+                    }
+                }
+            },
             window: {
                 current_modal: null,
                 get_content: function(uid){
@@ -3427,12 +3444,13 @@ var lib = {
 
             }, helpers.reject_handler);
         },
-        receiver_changed: function(uid, data){
-            return Promise.all([
-                lib.ui.receivers.window.update_if_opened(uid),
-                lib.ui.draw.receivers()
-            ]);            
-        },
+            receiver_changed: function(uid, data){
+                return Promise.all([
+                    lib.ui.receivers.window.update_if_opened(uid),
+                    lib.ui.receivers.mobile.update_if_opened(),
+                    lib.ui.draw.receivers()
+                ]);
+            },
         update_receiver_obj: function(receiver_obj) {
             return lib.receivers.update_receiver(
                 receiver_obj.uid,
